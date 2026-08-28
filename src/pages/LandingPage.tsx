@@ -5,7 +5,7 @@ import { LANDING_BG, RESIDENT_IMAGES } from '@/constants/images';
 import { ArrowRight } from '@/components/Icons';
 
 export function LandingPage() {
-  const { setCurrentPage, resetAnswers, setResidentKey, setSecondResidentKey } = useApp();
+  const { setCurrentPage, resetAnswers, setResidentKey, setSecondResidentKey, setSelectedResidentKey } = useApp();
 
   useEffect(() => {
     const images = Object.values(RESIDENT_IMAGES).filter(Boolean);
@@ -47,6 +47,7 @@ export function LandingPage() {
               resetAnswers();
               setResidentKey(null);
               setSecondResidentKey(null);
+              setSelectedResidentKey(null);
               setCurrentPage('nickname');
             }}
             className="group flex items-center gap-2 px-8 py-4 bg-white/95 text-text rounded-full font-sans font-medium text-base

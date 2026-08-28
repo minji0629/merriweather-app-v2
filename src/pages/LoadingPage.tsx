@@ -15,13 +15,14 @@ const FIREFLIES = [
 ];
 
 export function LoadingPage() {
-  const { answers, setCurrentPage, setResidentKey, setSecondResidentKey, setSelectedResultId, nickname } = useApp();
+  const { answers, setCurrentPage, setResidentKey, setSecondResidentKey, setSelectedResultId, setSelectedResidentKey, nickname } = useApp();
   const { user, marketingConsent } = useAuth();
 
   useEffect(() => {
     const [key, secondKey] = calculateTopTwoResidents(answers);
     setResidentKey(key);
     setSecondResidentKey(secondKey);
+    setSelectedResidentKey(null);
 
     console.log('[Results] LoadingPage - 주민 배정 완료:', { key, secondKey, isLoggedIn: !!user, userId: user?.id, nickname });
 
@@ -78,7 +79,7 @@ export function LoadingPage() {
 
     const timer = setTimeout(() => setCurrentPage('result'), 3000);
     return () => clearTimeout(timer);
-  }, [answers, setCurrentPage, setResidentKey, setSecondResidentKey, setSelectedResultId, user, nickname, marketingConsent]);
+  }, [answers, setCurrentPage, setResidentKey, setSecondResidentKey, setSelectedResultId, setSelectedResidentKey, user, nickname, marketingConsent]);
 
   return (
     <PageContainer className="bg-gradient-to-b from-purple-bg to-purple-bg-dark" footer={false}>

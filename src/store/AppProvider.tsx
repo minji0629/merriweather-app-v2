@@ -1,6 +1,7 @@
 import { ReactNode, useState, useCallback, useMemo, useEffect } from 'react';
 import { AppContext, AppState, Page, Answer } from '@/store/appContext';
 import { ResidentKey } from '@/constants/questions';
+import { clearResultId, clearPreLoginResult } from '@/lib/authStorage';
 
 const STORAGE_KEY = 'merriweather:app-state';
 
@@ -88,13 +89,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAnswers([]);
     setResidentKey(null);
     setSecondResidentKey(null);
+    setSelectedResultId(null);
+    setSelectedResidentKey(null);
     setCurrentPage('nickname');
     try {
       window.localStorage.removeItem(STORAGE_KEY);
+      clearResultId();
+      clearPreLoginResult();
     } catch {
       // ignore
     }
-  }, []);
+  }, [setCurrentPage]);
 
   const value: AppState = {
     nickname,

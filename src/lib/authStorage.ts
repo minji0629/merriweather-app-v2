@@ -112,3 +112,27 @@ export function loadGiftInfo(): GiftInfo | null {
 export function clearGiftInfo() {
   localStorage.removeItem(GIFT_INFO_KEY);
 }
+const PRE_LOGIN_RESULT_KEY = 'merriweather_pre_login_result';
+
+export interface PreLoginResult {
+  resultId: string;
+  residentKey: string;
+}
+
+export function savePreLoginResult(data: PreLoginResult) {
+  localStorage.setItem(PRE_LOGIN_RESULT_KEY, JSON.stringify(data));
+}
+
+export function loadPreLoginResult(): PreLoginResult | null {
+  try {
+    const raw = localStorage.getItem(PRE_LOGIN_RESULT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as PreLoginResult;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPreLoginResult() {
+  localStorage.removeItem(PRE_LOGIN_RESULT_KEY);
+}

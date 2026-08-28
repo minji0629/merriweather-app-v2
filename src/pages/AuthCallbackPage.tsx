@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase, upsertUser, saveFreeResult, savePurchase, markResultPaid, fetchLatestResultId, linkResultToUser, linkQuestionsToUser } from '@/lib/supabase';
+import { Bolt Database, upsertUser, saveFreeResult, savePurchase, markResultPaid, fetchLatestResultId, linkResultToUser, linkQuestionsToUser } from '@/lib/supabase';
 import {
   loadReturnPage,
   clearReturnPage,
@@ -7,23 +7,30 @@ import {
   clearPendingPurchase,
   saveResultId,
   loadResultId,
+  loadPreLoginResult,
+  clearPreLoginResult,
 } from '@/lib/authStorage';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
+import type { ResidentKey } from '@/constants/questions';
 
 export function AuthCallbackPage() {
-  const { setCurrentPage, residentKey, answers, setSelectedResultId } = useApp();
+  const { setCurrentPage, residentKey, answers, setSelectedResultId, setSelectedResidentKey } = useApp();
   const { setUser, marketingConsent } = useAuth();
   const [error, setError] = useState('');
-  const hasRun = useRef(false);
+  const processingRef = useRef(false);
 
   useEffect(() => {
-    if (hasRun.current) return;
-    hasRun.current = true;
+    if (processingRef.current) return;
+    processingRef.current = true;
+
+    let cancelled = false;
+
     (async () => {
       try {
         console.log('[Auth Callback] 시작');
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (cancelled) return;
         console.log('[Auth Callback] getSession:', { sessionError, hasSession: !!sessionData.session });
         if (sessionError || !sessionData.session) {
           throw new Error('세션을 가져오지 못했습니다.');
@@ -43,56 +50,77 @@ export function AuthCallbackPage() {
         console.log('[Auth Callback] 추출값:', { nickname, email });
 
         const authUserObj = { id: authUser.id, nickname, email };
-        setUser(authUserObj);
+        if (!cancelled) setUser(authUserObj);
 
         console.log('[Auth Callback] upsertUser 호출:', { id: authUser.id, nickname, email, marketingConsent });
         const dbUser = await upsertUser(authUser.id, nickname, marketingConsent, email ?? undefined);
+        if (cancelled) return;
         console.log('[Auth Callback] upsertUser 결과:', dbUser);
 
-        if (dbUser && residentKey) {
-          const pendingResultId = loadResultId();
+        if (dbUser) {
+          // Restore pre-login result context from localStorage
+          const preLogin = loadPreLoginResult();
+          const pendingResultId = preLogin?.resultId ?? loadResultId();
+          const effectiveResidentKey = (preLogin?.residentKey ?? residentKey ?? '') as ResidentKey;
+
+          if (preLogin) {
+            console.log('[Auth Callback] pre-login 결과 복원:', preLogin);
+          }
+
           if (pendingResultId) {
+            // Link the existing anonymous result to the real user
             const linked = await linkResultToUser(pendingResultId, dbUser.id);
+            if (cancelled) return;
             console.log('[Results] AuthCallback - 기존 결과 연결:', { pendingResultId, linked });
             if (linked) {
               await linkQuestionsToUser(pendingResultId, dbUser.id);
+              if (cancelled) return;
               saveResultId(pendingResultId);
               setSelectedResultId(pendingResultId);
+              if (effectiveResidentKey) {
+                setSelectedResidentKey(effectiveResidentKey);
+              }
             } else {
+              // Link failed — try to find existing result or create new one
               const existingResultId = await fetchLatestResultId(dbUser.id);
+              if (cancelled) return;
               if (existingResultId) {
                 saveResultId(existingResultId);
                 setSelectedResultId(existingResultId);
-              } else {
-                const result = await saveFreeResult(dbUser.id, residentKey, { answers });
+              } else if (effectiveResidentKey) {
+                const result = await saveFreeResult(dbUser.id, effectiveResidentKey, { answers });
+                if (cancelled) return;
                 if (result) {
                   saveResultId(result.id);
                   setSelectedResultId(result.id);
                 }
               }
             }
-          } else {
+          } else if (effectiveResidentKey) {
+            // No pending result — check for existing or create new
             const existingResultId = await fetchLatestResultId(dbUser.id);
+            if (cancelled) return;
             if (existingResultId) {
               console.log('[Results] AuthCallback - 기존 결과 재사용:', existingResultId);
               saveResultId(existingResultId);
               setSelectedResultId(existingResultId);
             } else {
-              console.log('[Results] AuthCallback - saveFreeResult 호출:', { userId: dbUser.id, residentKey, answersCount: answers.length });
-              const result = await saveFreeResult(dbUser.id, residentKey, { answers });
+              console.log('[Results] AuthCallback - saveFreeResult 호출:', { userId: dbUser.id, effectiveResidentKey, answersCount: answers.length });
+              const result = await saveFreeResult(dbUser.id, effectiveResidentKey, { answers });
+              if (cancelled) return;
               console.log('[Results] AuthCallback - saveFreeResult 결과:', result ? `성공 (id: ${result.id})` : '실패 (null)');
               if (result) {
                 saveResultId(result.id);
                 setSelectedResultId(result.id);
-                console.log('[Payment] 결제 전 result_id 저장:', result.id);
               }
             }
           }
+          clearPreLoginResult();
         } else {
-          console.log('[Results] AuthCallback - saveFreeResult 스킵:', { hasDbUser: !!dbUser, hasResidentKey: !!residentKey });
+          console.log('[Results] AuthCallback - saveFreeResult 스킵: dbUser 없음');
         }
 
-        // 대기 중인 결제 저장 처리
+        // Handle pending purchase
         const pending = loadPendingPurchase();
         if (pending) {
           console.log('[Auth Callback] 대기 중 결제 저장:', pending);
@@ -109,8 +137,6 @@ export function AuthCallbackPage() {
             if (pendingResultId) {
               await markResultPaid(pendingResultId, pending.productType);
               console.log('[Auth Callback] pending markResultPaid 완료, result_id:', pendingResultId, 'productType:', pending.productType);
-            } else {
-              console.error('[Auth Callback] pending result_id 없음 - markResultPaid 스킵');
             }
           } catch (err) {
             console.error('[Auth Callback] pending 결제 저장 실패:', err);
@@ -118,17 +144,24 @@ export function AuthCallbackPage() {
           clearPendingPurchase();
         }
 
+        if (cancelled) return;
+
         const returnPage = loadReturnPage();
         clearReturnPage();
         const targetPage = (returnPage as 'landing' | 'nickname' | 'result' | 'payment' | 'authCallback') || 'landing';
         console.log('[Auth Callback] 이동:', targetPage);
         setCurrentPage(targetPage);
       } catch (err) {
+        if (cancelled) return;
         console.error('[Auth Callback] 실패:', err);
         setError(err instanceof Error ? err.message : '로그인에 실패했어요.');
       }
     })();
-  }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId, setSelectedResidentKey]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-base px-6">

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bolt Database, upsertUser, saveFreeResult, savePurchase, markResultPaid, fetchLatestResultId, linkResultToUser, linkQuestionsToUser } from '@/lib/supabase';
+import { supabase, upsertUser, saveFreeResult, savePurchase, markResultPaid, fetchLatestResultId, linkResultToUser, linkQuestionsToUser } from '@/lib/supabase';
 import {
   loadReturnPage,
   clearReturnPage,

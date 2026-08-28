@@ -163,7 +163,7 @@ export function PaymentSuccessPage() {
         console.error('[Payment] 저장된 result_id 없음 - 결제 전 saveFreeResult가 선행되지 않았을 수 있습니다.');
       }
 
-      const { data: resultRow } = await Bolt Database
+      const { data: resultRow } = await supabase
         .from('results')
         .select('id, resident_key')
         .eq('id', targetResultId ?? '')

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
-import { supabase, savePurchase, markResultPaid, upsertQuestions, createGiftCode, GiftCodeRow } from '@/lib/supabase';
+import { Bolt Database, savePurchase, markResultPaid, upsertQuestions, createGiftCode, GiftCodeRow } from '@/lib/supabase';
 import {
   loadUserId,
   savePendingPurchase,
@@ -15,53 +15,53 @@ import {
 } from '@/lib/authStorage';
 import { PageContainer } from '@/components/PageContainer';
 import { Check, Sparkles, Gift } from '@/components/Icons';
+import type { ProductId } from '@/lib/portone';
+
+const PRODUCT_TYPE_MAP: Record<ProductId, string> = {
+  expedition: '탐험권',
+  expedition_plus: '탐험권+추가질문',
+  extra_questions: '추가질문',
+  gift_basic: '탐험권',
+  gift_plus: '탐험권+추가질문',
+};
 
 export function PaymentSuccessPage() {
   const { setCurrentPage, residentKey, setSelectedResultId } = useApp();
   const { login } = useAuth();
   const [status, setStatus] = useState<'processing' | 'done' | 'needLogin' | 'giftDone'>('processing');
   const [giftCode, setGiftCode] = useState<GiftCodeRow | null>(null);
-  const hasRun = useRef(false);
 
   useEffect(() => {
-    if (hasRun.current) return;
-    hasRun.current = true;
+    let cancelled = false;
+
     (async () => {
       const params = new URLSearchParams(window.location.search);
       const impUid = params.get('imp_uid');
       const merchantUid = params.get('merchant_uid');
       const amount = params.get('amount');
-      const productId = params.get('product_id');
+      const productId = params.get('product_id') as ProductId | null;
       const impSuccess = params.get('imp_success');
 
       console.log('[Payment Success] 파라미터:', { impUid, merchantUid, amount, productId, impSuccess });
 
-      // 모바일 결제창 닫기/취소 시 imp_success=false 로 리다이렉트됨
       if (impSuccess === 'false') {
         console.warn('[Payment Success] 결제 취소/실패 (imp_success=false)');
-        setCurrentPage('payment');
+        if (!cancelled) setCurrentPage('payment');
         return;
       }
 
       const hasValidParams = impUid && merchantUid && amount;
       if (!hasValidParams) {
         console.warn('[Payment Success] 필수 파라미터 누락');
-        setStatus('done');
+        if (!cancelled) setStatus('done');
         return;
       }
 
-      const isGift = merchantUid!.includes('gift_plus') || merchantUid!.includes('gift_basic');
-      const isGiftPlus = merchantUid!.includes('gift_plus');
-      const productType = isGift
-        ? (isGiftPlus ? '탐험권+추가질문' : '탐험권')
-        : merchantUid!.includes('expedition_plus')
-          ? '탐험권+추가질문'
-          : merchantUid!.includes('extra_questions')
-            ? '추가질문'
-            : '탐험권';
+      const isGift = productId === 'gift_basic' || productId === 'gift_plus';
+      const productType = productId ? (PRODUCT_TYPE_MAP[productId] ?? '탐험권') : '탐험권';
 
-      // 1. supabase.auth.getSession() 으로 세션 직접 확인
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (cancelled) return;
       console.log('[Payment Success] getSession:', {
         hasSession: !!sessionData.session,
         sessionError: sessionError?.message,
@@ -73,12 +73,10 @@ export function PaymentSuccessPage() {
         userId = sessionData.session.user.id;
         console.log('[Payment Success] 세션에서 사용자 ID 확인:', userId);
       } else {
-        // 2. localStorage에서 저장된 사용자 ID 확인
         userId = loadUserId();
         console.log('[Payment Success] localStorage 사용자 ID:', userId);
       }
 
-      // 3. 사용자 ID가 없으면 결제 정보를 localStorage에 임시 저장 후 로그인 페이지로
       if (!userId) {
         console.warn('[Payment Success] 사용자 ID 없음 - 임시 저장 후 로그인 필요');
         const pending: PendingPurchase = {
@@ -89,11 +87,10 @@ export function PaymentSuccessPage() {
         };
         savePendingPurchase(pending);
         console.log('[Payment Success] 임시 저장 완료:', pending);
-        setStatus('needLogin');
+        if (!cancelled) setStatus('needLogin');
         return;
       }
 
-      // 4. purchases 테이블에 저장
       console.log('[Payment Success] purchases insert 호출:', {
         userId,
         productType,
@@ -109,6 +106,7 @@ export function PaymentSuccessPage() {
           impUid!,
           merchantUid!,
         );
+        if (cancelled) return;
         if (result) {
           console.log('[Results] PaymentSuccess - purchases insert 성공:', result.id);
         } else {
@@ -118,7 +116,6 @@ export function PaymentSuccessPage() {
         console.error('[Results] PaymentSuccess - savePurchase 예외:', err);
       }
 
-      // ── 선물하기: gift_codes 행 생성 ──
       if (isGift) {
         const giftInfo = loadGiftInfo();
         console.log('[Payment Success] 선물 정보:', giftInfo);
@@ -130,12 +127,15 @@ export function PaymentSuccessPage() {
             giftInfo?.message ?? '',
             productType,
           );
+          if (cancelled) return;
           console.log('[Payment Success] createGiftCode 결과:', giftRow);
 
           if (giftRow) {
-            setGiftCode(giftRow);
-            clearGiftInfo();
-            setStatus('giftDone');
+            if (!cancelled) {
+              setGiftCode(giftRow);
+              clearGiftInfo();
+              setStatus('giftDone');
+            }
             return;
           } else {
             console.error('[Payment Success] createGiftCode 실패');
@@ -145,7 +145,6 @@ export function PaymentSuccessPage() {
         }
       }
 
-      // localStorage에서 결제 전 저장한 result_id를 정확히 사용
       const savedResultId = loadResultId();
       console.log('[Payment] 결제 전 저장된 result_id:', savedResultId);
 
@@ -155,6 +154,7 @@ export function PaymentSuccessPage() {
         try {
           console.log('[Payment] markResultPaid 호출, result_id:', targetResultId, 'productType:', productType);
           const ok = await markResultPaid(targetResultId, productType);
+          if (cancelled) return;
           console.log('[Payment] markResultPaid 결과:', ok);
         } catch (err) {
           console.error('[Payment] markResultPaid 예외:', err);
@@ -163,33 +163,38 @@ export function PaymentSuccessPage() {
         console.error('[Payment] 저장된 result_id 없음 - 결제 전 saveFreeResult가 선행되지 않았을 수 있습니다.');
       }
 
-      // 표시할 주민 키 확인
-      const { data: resultRow } = await supabase
+      const { data: resultRow } = await Bolt Database
         .from('results')
         .select('id, resident_key')
         .eq('id', targetResultId ?? '')
         .maybeSingle();
+      if (cancelled) return;
       console.log('[Payment] 결제 후 불러온 result_id:', resultRow?.id ?? null);
       console.log('[Payment] 표시된 주민 키:', resultRow?.resident_key ?? null);
 
-      // questions 테이블 생성/업데이트
       if (targetResultId) {
         try {
           const qRow = await upsertQuestions(userId, targetResultId, productType);
+          if (cancelled) return;
           console.log('[Payment] upsertQuestions 결과:', qRow);
         } catch (err) {
           console.error('[Payment] upsertQuestions 예외:', err);
         }
       }
 
-      // 유료 결과 페이지에서 정확한 result_id를 사용하도록 설정
       if (targetResultId) {
-        setSelectedResultId(targetResultId);
-        console.log('[Payment] selectedResultId 설정:', targetResultId);
+        if (!cancelled) {
+          setSelectedResultId(targetResultId);
+          console.log('[Payment] selectedResultId 설정:', targetResultId);
+        }
       }
 
-      setStatus('done');
+      if (!cancelled) setStatus('done');
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [setCurrentPage, setSelectedResultId]);
 
   // 처리 완료 후 페이지 이동

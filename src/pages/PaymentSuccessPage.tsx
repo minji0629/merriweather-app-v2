@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
-import { Bolt Database, savePurchase, markResultPaid, upsertQuestions, createGiftCode, GiftCodeRow } from '@/lib/supabase';
+import { supabase, savePurchase, markResultPaid, upsertQuestions, createGiftCode, GiftCodeRow } from '@/lib/supabase';
 import {
   loadUserId,
   savePendingPurchase,

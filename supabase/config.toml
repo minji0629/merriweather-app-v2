@@ -1,0 +1,5 @@
+[functions.claude-ai]
+verify_jwt = false
+
+[functions.git-push]
+verify_jwt = false

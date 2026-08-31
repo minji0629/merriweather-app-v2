@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase, upsertUser, saveFreeResult, savePurchase, markResultPaid, fetchLatestResultId, linkResultToUser, linkQuestionsToUser } from '@/lib/supabase';
+import { supabase, upsertUser, saveFreeResult, savePurchase, markResultPaid, fetchLatestResultId, linkResultToUser, linkQuestionsToUser, upsertQuestions } from '@/lib/supabase';
 import {
   loadReturnPage,
   clearReturnPage,
@@ -137,6 +137,8 @@ export function AuthCallbackPage() {
             if (pendingResultId) {
               await markResultPaid(pendingResultId, pending.productType);
               console.log('[Auth Callback] pending markResultPaid 완료, result_id:', pendingResultId, 'productType:', pending.productType);
+              const qRow = await upsertQuestions(authUser.id, pendingResultId, pending.productType);
+              console.log('[Auth Callback] pending upsertQuestions 결과:', qRow);
             }
           } catch (err) {
             console.error('[Auth Callback] pending 결제 저장 실패:', err);

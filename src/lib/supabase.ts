@@ -233,6 +233,21 @@ export async function createGiftCode(
   return data as GiftCodeRow | null;
 }
 
+/** 구매자가 선물한 코드 목록 조회 */
+export async function fetchGiftCodesByBuyer(buyerId: string): Promise<GiftCodeRow[]> {
+  const { data, error } = await supabase
+    .from('gift_codes')
+    .select('*')
+    .eq('buyer_id', buyerId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[Supabase] fetchGiftCodesByBuyer error:', error.message);
+    return [];
+  }
+  return (data as GiftCodeRow[]) ?? [];
+}
+
 /** 비로그인 결과를 실제 계정으로 연결 (user_id 갱신) */
 export async function linkResultToUser(
   resultId: string,

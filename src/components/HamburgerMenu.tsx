@@ -6,7 +6,6 @@ export function HamburgerMenu() {
   const { user, logout, login } = useAuth();
   const { setCurrentPage, currentPage } = useApp();
   const [open, setOpen] = useState(false);
-  const [showGiftLogin, setShowGiftLogin] = useState(false);
 
   const handleLoginClick = async () => {
     setOpen(false);
@@ -94,21 +93,6 @@ export function HamburgerMenu() {
                 나의 여행 기록
               </button>
 
-              {/* 선물하기 */}
-              <button
-                onClick={() => {
-                  if (!user) {
-                    setOpen(false);
-                    setShowGiftLogin(true);
-                  } else {
-                    handleNavigate('gift');
-                  }
-                }}
-                className="w-full text-left px-4 py-3 rounded-xl font-sans text-sm text-text hover:bg-point/5 transition-colors"
-              >
-                탐험권 선물하기
-              </button>
-
               <div className="my-1 h-px shrink-0 bg-[#E0DDD8]" />
 
               {/* 메리웨더 소식 */}
@@ -165,27 +149,6 @@ export function HamburgerMenu() {
         </>
       )}
 
-      {showGiftLogin && !user && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowGiftLogin(false)} />
-          <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
-            <h2 className="font-batang text-xl text-text mb-2">선물하기를 위해 주민 인증이 필요해요</h2>
-            <p className="font-sans text-sm text-text-sub mb-6">
-              메리웨더 주민이 되면 소중한 사람에게 탐험권을 선물할 수 있어요.
-            </p>
-            <button
-              onClick={() => {
-                setShowGiftLogin(false);
-                login(currentPage);
-              }}
-              className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
-                         shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
-            >
-              메리웨더 주민 되기
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

@@ -36,6 +36,7 @@ export function ResultPage() {
   const [showGiftCode, setShowGiftCode] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showPreOpenNotice, setShowPreOpenNotice] = useState(false);
   const effectiveKey = selectedResidentKey ?? residentKey;
   const RESULT = effectiveKey ? getResidentProfile(effectiveKey) : null;
   const resultShareUrl = selectedResultId ? buildResultShareUrl(selectedResultId, 'basic') : SERVICE_URL;
@@ -263,16 +264,7 @@ export function ResultPage() {
             </div>
           )}
           <button
-            onClick={() => {
-              if (!user) {
-                setShowSavePrompt(true);
-              } else {
-                if (selectedResultId && effectiveKey) {
-                  savePreLoginResult(selectedResultId, effectiveKey);
-                }
-                setCurrentPage('payment');
-              }
-            }}
+            onClick={() => setShowPreOpenNotice(true)}
             className="w-full py-4 bg-point text-white rounded-2xl font-sans font-medium text-base
                        shadow-lg transition-all duration-300 hover:bg-point-dark hover:shadow-xl hover:scale-[1.02] active:scale-95
                        flex items-center justify-between px-6"
@@ -285,16 +277,7 @@ export function ResultPage() {
           </button>
           <div className="relative">
             <button
-              onClick={() => {
-                if (!user) {
-                  setShowSavePrompt(true);
-                } else {
-                  if (selectedResultId && effectiveKey) {
-                    savePreLoginResult(selectedResultId, effectiveKey);
-                  }
-                  setCurrentPage('payment');
-                }
-              }}
+              onClick={() => setShowPreOpenNotice(true)}
               className="w-full py-4 bg-text text-white rounded-2xl font-sans font-medium text-base
                          shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-95
                          flex items-center justify-between px-6"
@@ -337,13 +320,7 @@ export function ResultPage() {
         {/* Gift button */}
         <div className="px-6 pb-4 space-y-3">
           <button
-            onClick={() => {
-              if (!user) {
-                setShowGiftLogin(true);
-              } else {
-                setCurrentPage('gift');
-              }
-            }}
+            onClick={() => setShowPreOpenNotice(true)}
             className="w-full py-3.5 bg-white text-point-dark rounded-2xl font-sans font-medium text-sm
                        border border-point shadow-sm transition-all duration-300 hover:bg-point/5 hover:shadow-md active:scale-95
                        flex items-center justify-center gap-2"
@@ -386,6 +363,29 @@ export function ResultPage() {
         )}
 
         {showGiftCode && <GiftCodeModal onClose={() => setShowGiftCode(false)} />}
+
+        {/* Pre-open notice modal */}
+        {showPreOpenNotice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowPreOpenNotice(false)} />
+            <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-golden/20 flex items-center justify-center">
+                <span className="text-2xl">🌿</span>
+              </div>
+              <h2 className="font-batang text-xl text-text mb-2">9월 7일 정식 오픈 예정이에요</h2>
+              <p className="font-sans text-sm text-text-sub mb-6 leading-relaxed">
+                조금만 기다려주세요!
+              </p>
+              <button
+                onClick={() => setShowPreOpenNotice(false)}
+                className="w-full py-3.5 bg-point text-white rounded-2xl font-sans font-medium text-base
+                           shadow-lg transition-all duration-300 hover:bg-point-dark hover:shadow-xl active:scale-95"
+              >
+                알겠어요
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Restart link */}
         <div className="px-6 pb-8 text-center">

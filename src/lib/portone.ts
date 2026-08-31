@@ -60,7 +60,7 @@ export function requestPayment(productId: ProductId): Promise<void> {
           buyer_email: '',
           buyer_name: '',
           buyer_tel: '',
-          m_redirect_url: `${window.location.origin}/payment/success`,
+          m_redirect_url: `${window.location.origin}/payment/success?product_id=${productId}`,
         },
         (rsp: IamportCallback) => {
           if (rsp.success) {

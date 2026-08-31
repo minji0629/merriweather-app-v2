@@ -57,8 +57,23 @@ export function PaymentSuccessPage() {
         return;
       }
 
-      const isGift = productId === 'gift_basic' || productId === 'gift_plus';
-      const productType = productId ? (PRODUCT_TYPE_MAP[productId] ?? '탐험권') : '탐험권';
+      // 모바일 결제 시 PG사 리다이렉트에서 product_id가 누락될 수 있으므로
+      // merchant_uid(형식: merriweather-{productId}-{timestamp})에서 추출
+      const VALID_PRODUCT_IDS: ProductId[] = ['expedition', 'expedition_plus', 'extra_questions', 'gift_basic', 'gift_plus'];
+      let resolvedProductId = productId;
+      if (!resolvedProductId && merchantUid) {
+        const parts = merchantUid.split('-');
+        if (parts.length >= 3) {
+          const candidate = parts.slice(1, -1).join('-') as ProductId;
+          if (VALID_PRODUCT_IDS.includes(candidate)) {
+            resolvedProductId = candidate;
+            console.log('[Payment Success] merchant_uid에서 product_id 추출:', resolvedProductId);
+          }
+        }
+      }
+
+      const isGift = resolvedProductId === 'gift_basic' || resolvedProductId === 'gift_plus';
+      const productType = resolvedProductId ? (PRODUCT_TYPE_MAP[resolvedProductId] ?? '탐험권') : '탐험권';
 
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (cancelled) return;

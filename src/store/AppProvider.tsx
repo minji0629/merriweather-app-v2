@@ -1,7 +1,7 @@
 import { ReactNode, useState, useCallback, useMemo, useEffect } from 'react';
 import { AppContext, AppState, Page, Answer } from '@/store/appContext';
 import { ResidentKey } from '@/constants/questions';
-import { clearResultId } from '@/lib/authStorage';
+import { clearResultId, clearPreLoginResult } from '@/lib/authStorage';
 
 const STORAGE_KEY = 'merriweather:app-state';
 
@@ -95,6 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
       clearResultId();
+      clearPreLoginResult();
     } catch {
       // ignore
     }

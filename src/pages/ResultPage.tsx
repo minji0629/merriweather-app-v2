@@ -9,6 +9,7 @@ import ResidentFlipCard from '@/components/ResidentFlipCard';
 import { GiftCodeModal } from '@/components/GiftCodeModal';
 import { ShareModal } from '@/components/ShareModal';
 import { buildResultShareUrl, SERVICE_URL } from '@/lib/share';
+import { savePreLoginResult } from '@/lib/authStorage';
 
 const PREMIUM_SECTIONS = [
   { emoji: '🌿', title: '당신이라는 사람', hint: '당신이 세상을 바라보는 방식의 비밀' },
@@ -266,6 +267,9 @@ export function ResultPage() {
               if (!user) {
                 setShowSavePrompt(true);
               } else {
+                if (selectedResultId && effectiveKey) {
+                  savePreLoginResult(selectedResultId, effectiveKey);
+                }
                 setCurrentPage('payment');
               }
             }}
@@ -285,6 +289,9 @@ export function ResultPage() {
                 if (!user) {
                   setShowSavePrompt(true);
                 } else {
+                  if (selectedResultId && effectiveKey) {
+                    savePreLoginResult(selectedResultId, effectiveKey);
+                  }
                   setCurrentPage('payment');
                 }
               }}

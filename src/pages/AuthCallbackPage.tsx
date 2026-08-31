@@ -19,6 +19,7 @@ export function AuthCallbackPage() {
   const { setUser, marketingConsent } = useAuth();
   const [error, setError] = useState('');
   const processingRef = useRef(false);
+  const navigatedRef = useRef(false);
 
   useEffect(() => {
     if (processingRef.current) return;
@@ -147,10 +148,12 @@ export function AuthCallbackPage() {
         }
 
         if (cancelled) return;
+        if (navigatedRef.current) return;
+        navigatedRef.current = true;
 
         const returnPage = loadReturnPage();
-        clearReturnPage();
         const targetPage = (returnPage as 'landing' | 'nickname' | 'result' | 'payment' | 'authCallback') || 'landing';
+        clearReturnPage();
         console.log('[Auth Callback] 이동:', targetPage);
         setCurrentPage(targetPage);
       } catch (err) {
@@ -162,6 +165,7 @@ export function AuthCallbackPage() {
 
     return () => {
       cancelled = true;
+      processingRef.current = false;
     };
   }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId, setSelectedResidentKey]);
 

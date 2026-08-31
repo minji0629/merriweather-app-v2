@@ -25,6 +25,39 @@ export function NoticePage() {
           {/* Notice list */}
           <div className="space-y-4">
             <article
+  className="p-5 bg-white rounded-2xl border border-[#E0DDD8] shadow-sm animate-fadeUp"
+  style={{ animationDelay: '0.1s', opacity: 0 }}
+>
+  <div className="flex items-center gap-2 mb-3">
+    <span className="text-base">📌</span>
+    <span className="px-2.5 py-1 bg-point/10 text-point-dark text-xs font-sans font-bold rounded-full">
+      [안내]
+    </span>
+  </div>
+  <h2 className="font-batang text-lg text-text mb-2">메리웨더 프리오픈 안내</h2>
+  <p className="font-sans text-xs text-text-sub mb-4">2026년 9월</p>
+  <div className="space-y-2">
+    <p className="font-sans text-sm text-text leading-relaxed">
+      메리웨더 프리오픈이 시작됩니다.
+    </p>
+    <p className="font-sans text-sm text-text leading-relaxed">
+      나를 찾아 떠나는 여행, 지금 바로 시작해보세요.
+    </p>
+    <p className="font-sans text-sm text-text leading-relaxed">
+      프리오픈 기간: 2026년 9월 1일 ~ 9월 5일
+    </p>
+    <p className="font-sans text-sm text-text leading-relaxed">
+      프리오픈 기간에는 무료 결과 보기만 가능합니다.
+    </p>
+    <p className="font-sans text-sm text-text-sub leading-relaxed">
+      정식 오픈: 2026년 9월 7일
+    </p>
+    <p className="font-sans text-sm text-text-sub leading-relaxed">
+      탐험권 구매 및 선물하기는 9월 7일 정식 오픈 후 이용 가능합니다.
+    </p>
+  </div>
+</article>
+            <article
               className="p-5 bg-white rounded-2xl border border-[#E0DDD8] shadow-sm animate-fadeUp"
               style={{ animationDelay: '0.1s', opacity: 0 }}
             >

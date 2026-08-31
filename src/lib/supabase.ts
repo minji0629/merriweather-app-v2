@@ -132,6 +132,16 @@ export async function savePurchase(
   paymentKey: string,
   orderId: string,
 ): Promise<PurchaseRow | null> {
+  const { data: existing } = await supabase
+    .from('purchases')
+    .select('*')
+    .eq('order_id', orderId)
+    .maybeSingle();
+  if (existing) {
+    console.log('[Supabase] savePurchase - 이미 존재하는 주문:', orderId);
+    return existing as PurchaseRow | null;
+  }
+
   const { data, error } = await supabase
     .from('purchases')
     .insert({
@@ -154,15 +164,22 @@ export async function savePurchase(
 export async function markResultPaid(resultId: string, productType?: string): Promise<boolean> {
   const update: Record<string, unknown> = { is_paid: true };
   if (productType) update.product_type = productType;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('results')
     .update(update)
-    .eq('id', resultId);
+    .eq('id', resultId)
+    .select('id, is_paid, product_type')
+    .maybeSingle();
 
   if (error) {
     console.error('[Supabase] markResultPaid error:', error.message);
     return false;
   }
+  if (!data) {
+    console.warn('[Supabase] markResultPaid - 업데이트된 행 없음, result_id:', resultId);
+    return false;
+  }
+  console.log('[Supabase] markResultPaid 성공:', data);
   return true;
 }
 
@@ -281,7 +298,36 @@ export async function fetchUserResults(userId: string): Promise<ResultRow[]> {
     console.error('[Supabase] fetchUserResults error:', error.message);
     return [];
   }
-  return (data as ResultRow[]) ?? [];
+  const rows = (data as ResultRow[]) ?? [];
+
+  // purchases 테이블에 결제 기록이 있지만 is_paid가 false인 결과를 보정
+  const unpaidRows = rows.filter((r) => !r.is_paid);
+  if (unpaidRows.length > 0) {
+    const { data: purchases } = await supabase
+      .from('purchases')
+      .select('order_id, product_type, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (purchases && purchases.length > 0) {
+      for (const row of unpaidRows) {
+        // 결과 생성 시간과 가장 가까운 결제 기록 찾기
+        const resultTime = new Date(row.created_at).getTime();
+        const matchingPurchase = purchases.find((p) => {
+          const purchaseTime = new Date(p.created_at).getTime();
+          return Math.abs(purchaseTime - resultTime) < 10 * 60 * 1000; // 10분 이내
+        });
+        if (matchingPurchase) {
+          console.log('[Supabase] fetchUserResults - is_paid 보정:', row.id, '→ product_type:', matchingPurchase.product_type);
+          await markResultPaid(row.id, matchingPurchase.product_type);
+          row.is_paid = true;
+          row.product_type = matchingPurchase.product_type;
+        }
+      }
+    }
+  }
+
+  return rows;
 }
 
 /** 특정 result_id로 단일 결과 행을 불러온다 (보관함에서 선택한 결과용) */
@@ -396,6 +442,20 @@ export async function upsertQuestions(
   }
 
   if (existing) {
+    const newCount = INITIAL_COUNTS[productType] ?? 1;
+    if (newCount > existing.remaining_count) {
+      const { data, error } = await supabase
+        .from('questions')
+        .update({ remaining_count: newCount })
+        .eq('id', existing.id)
+        .select()
+        .maybeSingle();
+      if (error) {
+        console.error('[Supabase] upsertQuestions(upgrade) error:', error.message);
+        return existing as QuestionRow | null;
+      }
+      return (data as QuestionRow | null) ?? existing;
+    }
     return existing as QuestionRow | null;
   }
 

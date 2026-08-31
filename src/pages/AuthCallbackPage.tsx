@@ -21,26 +21,25 @@ export function AuthCallbackPage() {
   const processingRef = useRef(false);
   const navigatedRef = useRef(false);
 
+  // returnPage를 effect 시작 시점에 동기적으로 캡처하여
+  // StrictMode 중복 실행이나 경쟁 상태에서도 안전하게 유지
+  const savedReturnPage = useRef<string | null>(null);
+
   useEffect(() => {
     if (processingRef.current) return;
     processingRef.current = true;
 
+    // 동기적으로 returnPage를 캡처 (effect 재실행 시에도 안전)
+    if (!savedReturnPage.current) {
+      savedReturnPage.current = loadReturnPage();
+      console.log('[Auth Callback] returnPage 캡처:', savedReturnPage.current);
+    }
+
     let cancelled = false;
+    let unsub: (() => void) | null = null;
 
-    (async () => {
+    const processSession = async (authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }) => {
       try {
-        console.log('[Auth Callback] 시작');
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (cancelled) return;
-        console.log('[Auth Callback] getSession:', { sessionError, hasSession: !!sessionData.session });
-        if (sessionError || !sessionData.session) {
-          throw new Error('세션을 가져오지 못했습니다.');
-        }
-
-        const authUser = sessionData.session.user;
-        console.log('[Auth Callback] user:', { id: authUser.id, email: authUser.email });
-        console.log('[Auth Callback] user_metadata:', authUser.user_metadata);
-
         const nickname =
           (authUser.user_metadata?.nickname as string) ||
           (authUser.user_metadata?.name as string) ||
@@ -48,18 +47,15 @@ export function AuthCallbackPage() {
           (authUser.user_metadata?.preferred_username as string) ||
           '사용자';
         const email = authUser.email ?? null;
-        console.log('[Auth Callback] 추출값:', { nickname, email });
 
         const authUserObj = { id: authUser.id, nickname, email };
         if (!cancelled) setUser(authUserObj);
 
-        console.log('[Auth Callback] upsertUser 호출:', { id: authUser.id, nickname, email, marketingConsent });
         const dbUser = await upsertUser(authUser.id, nickname, marketingConsent, email ?? undefined);
         if (cancelled) return;
         console.log('[Auth Callback] upsertUser 결과:', dbUser);
 
         if (dbUser) {
-          // Restore pre-login result context from localStorage
           const preLogin = loadPreLoginResult();
           const pendingResultId = preLogin?.resultId ?? loadResultId();
           const effectiveResidentKey = (preLogin?.residentKey ?? residentKey ?? '') as ResidentKey;
@@ -69,10 +65,8 @@ export function AuthCallbackPage() {
           }
 
           if (pendingResultId) {
-            // Link the existing anonymous result to the real user
             const linked = await linkResultToUser(pendingResultId, dbUser.id);
             if (cancelled) return;
-            console.log('[Results] AuthCallback - 기존 결과 연결:', { pendingResultId, linked });
             if (linked) {
               await linkQuestionsToUser(pendingResultId, dbUser.id);
               if (cancelled) return;
@@ -82,7 +76,6 @@ export function AuthCallbackPage() {
                 setSelectedResidentKey(effectiveResidentKey);
               }
             } else {
-              // Link failed — try to find existing result or create new one
               const existingResultId = await fetchLatestResultId(dbUser.id);
               if (cancelled) return;
               if (existingResultId) {
@@ -98,18 +91,14 @@ export function AuthCallbackPage() {
               }
             }
           } else if (effectiveResidentKey) {
-            // No pending result — check for existing or create new
             const existingResultId = await fetchLatestResultId(dbUser.id);
             if (cancelled) return;
             if (existingResultId) {
-              console.log('[Results] AuthCallback - 기존 결과 재사용:', existingResultId);
               saveResultId(existingResultId);
               setSelectedResultId(existingResultId);
             } else {
-              console.log('[Results] AuthCallback - saveFreeResult 호출:', { userId: dbUser.id, effectiveResidentKey, answersCount: answers.length });
               const result = await saveFreeResult(dbUser.id, effectiveResidentKey, { answers });
               if (cancelled) return;
-              console.log('[Results] AuthCallback - saveFreeResult 결과:', result ? `성공 (id: ${result.id})` : '실패 (null)');
               if (result) {
                 saveResultId(result.id);
                 setSelectedResultId(result.id);
@@ -117,14 +106,10 @@ export function AuthCallbackPage() {
             }
           }
           clearPreLoginResult();
-        } else {
-          console.log('[Results] AuthCallback - saveFreeResult 스킵: dbUser 없음');
         }
 
-        // Handle pending purchase
         const pending = loadPendingPurchase();
         if (pending) {
-          console.log('[Auth Callback] 대기 중 결제 저장:', pending);
           try {
             const result = await savePurchase(
               authUser.id,
@@ -133,13 +118,10 @@ export function AuthCallbackPage() {
               pending.impUid,
               pending.merchantUid,
             );
-            console.log('[Auth Callback] pending purchases insert 결과:', result);
             const pendingResultId = loadResultId();
             if (pendingResultId) {
               await markResultPaid(pendingResultId, pending.productType);
-              console.log('[Auth Callback] pending markResultPaid 완료, result_id:', pendingResultId, 'productType:', pending.productType);
-              const qRow = await upsertQuestions(authUser.id, pendingResultId, pending.productType);
-              console.log('[Auth Callback] pending upsertQuestions 결과:', qRow);
+              await upsertQuestions(authUser.id, pendingResultId, pending.productType);
             }
           } catch (err) {
             console.error('[Auth Callback] pending 결제 저장 실패:', err);
@@ -151,11 +133,41 @@ export function AuthCallbackPage() {
         if (navigatedRef.current) return;
         navigatedRef.current = true;
 
-        const returnPage = loadReturnPage();
+        const returnPage = savedReturnPage.current;
         const targetPage = (returnPage as 'landing' | 'nickname' | 'result' | 'payment' | 'authCallback') || 'landing';
         clearReturnPage();
         console.log('[Auth Callback] 이동:', targetPage);
         setCurrentPage(targetPage);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('[Auth Callback] 실패:', err);
+        setError(err instanceof Error ? err.message : '로그인에 실패했어요.');
+      }
+    };
+
+    (async () => {
+      try {
+        console.log('[Auth Callback] 시작');
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (cancelled) return;
+        console.log('[Auth Callback] getSession:', { sessionError, hasSession: !!sessionData.session });
+
+        if (sessionData.session) {
+          await processSession(sessionData.session.user);
+          return;
+        }
+
+        // 모바일에서 getSession이 아직 세션을 반환하지 않을 수 있음 —
+        // PKCE 코드 교환이 완료되기를 onAuthStateChange로 대기
+        console.log('[Auth Callback] 세션 없음, onAuthStateChange 대기...');
+        unsub = supabase.auth.onAuthStateChange((event, session) => {
+          if (cancelled) return;
+          if (event === 'SIGNED_IN' && session) {
+            console.log('[Auth Callback] onAuthStateChange: SIGNED_IN');
+            if (unsub) { unsub(); unsub = null; }
+            processSession(session.user);
+          }
+        }).data.subscription.unsubscribe;
       } catch (err) {
         if (cancelled) return;
         console.error('[Auth Callback] 실패:', err);
@@ -166,6 +178,7 @@ export function AuthCallbackPage() {
     return () => {
       cancelled = true;
       processingRef.current = false;
+      if (unsub) { unsub(); unsub = null; }
     };
   }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId, setSelectedResidentKey]);
 

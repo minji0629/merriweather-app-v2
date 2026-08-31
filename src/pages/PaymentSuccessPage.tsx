@@ -14,7 +14,7 @@ import {
   PendingPurchase,
 } from '@/lib/authStorage';
 import { PageContainer } from '@/components/PageContainer';
-import { Check, Sparkles, Gift } from '@/components/Icons';
+import { Check, Sparkles, Gift, Share2 } from '@/components/Icons';
 import type { ProductId } from '@/lib/portone';
 
 const PRODUCT_TYPE_MAP: Record<ProductId, string> = {
@@ -220,11 +220,33 @@ export function PaymentSuccessPage() {
   // 선물 완료 후 페이지 이동
   useEffect(() => {
     if (status !== 'giftDone') return;
-    const timer = setTimeout(() => {
-      setCurrentPage('landing');
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [status, setCurrentPage]);
+    return () => {};
+  }, [status]);
+
+  const handleGiftShare = async () => {
+    if (!giftCode) return;
+    const shareUrl = `${window.location.origin}/gift?code=${giftCode.code}`;
+    const shareText = `${giftCode.receiver_name}님에게 보내는 선물이 도착했어요.\n메리웨더에서 코드를 입력하면 열어볼 수 있어요.\n\n선물 코드: ${giftCode.code}\n${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '메리웨더 선물',
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch {
+        // 공유 취소 시 무시
+      }
+    } else {
+      navigator.clipboard?.writeText(shareText);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (!giftCode) return;
+    navigator.clipboard?.writeText(giftCode.code);
+  };
 
   return (
     <PageContainer className="bg-base" footer={false}>
@@ -242,40 +264,72 @@ export function PaymentSuccessPage() {
             </p>
           </>
         ) : status === 'giftDone' && giftCode ? (
-          <>
-            <div className="w-20 h-20 rounded-full bg-point/15 flex items-center justify-center mb-6 animate-scaleIn">
+          <div className="w-full max-w-sm">
+            <div className="w-20 h-20 rounded-full bg-point/15 flex items-center justify-center mx-auto mb-6 animate-scaleIn">
               <Gift className="w-10 h-10 text-point" />
             </div>
-            <h1 className="font-batang text-2xl text-text mb-3 animate-fadeUp" style={{ animationDelay: '0.2s', opacity: 0 }}>
-              선물 코드가 생성됐어요!
+            <h1 className="font-batang text-2xl text-text mb-2 animate-fadeUp" style={{ animationDelay: '0.2s', opacity: 0 }}>
+              선물이 완성됐어요.
             </h1>
-            <p className="font-sans text-sm text-text-sub mb-6 animate-fadeUp" style={{ animationDelay: '0.4s', opacity: 0 }}>
-              아래 코드를 받는 분에게 전달해주세요.
+            <p className="font-sans text-sm text-text-sub mb-8 animate-fadeUp" style={{ animationDelay: '0.3s', opacity: 0 }}>
+              소중한 사람에게 마음을 전해보세요.
             </p>
-            <div className="px-8 py-5 bg-white/80 rounded-2xl border-2 border-point shadow-lg mb-6 animate-fadeUp" style={{ animationDelay: '0.6s', opacity: 0 }}>
-              <p className="font-sans text-xs text-text-sub mb-1">선물 코드</p>
-              <p className="font-sans text-2xl font-bold tracking-[0.3em] text-text">{giftCode.code}</p>
+
+            {/* 받는 분 + 메시지 카드 */}
+            <div className="p-5 bg-gradient-to-br from-golden/15 to-golden/5 rounded-2xl border border-golden/30 mb-5 animate-fadeUp" style={{ animationDelay: '0.5s', opacity: 0 }}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-point-dark text-sm">✦</span>
+                <span className="font-sans text-xs text-text-sub">받는 분</span>
+                <span className="font-batang text-base text-text ml-1">{giftCode.receiver_name || '여행자'}</span>
+              </div>
+              {giftCode.message && (
+                <div className="pt-3 border-t border-golden/20">
+                  <p className="font-batang text-sm text-text leading-relaxed whitespace-pre-line">
+                    "{giftCode.message}"
+                  </p>
+                </div>
+              )}
             </div>
-            {giftCode.receiver_name && (
-              <p className="font-sans text-sm text-text-sub mb-1 animate-fadeUp" style={{ animationDelay: '0.8s', opacity: 0 }}>
-                받는 분: {giftCode.receiver_name}
+
+            {/* 선물 코드 */}
+            <div className="px-6 py-5 bg-white/90 rounded-2xl border-2 border-point shadow-lg mb-5 animate-fadeUp" style={{ animationDelay: '0.6s', opacity: 0 }}>
+              <p className="font-sans text-xs text-text-sub mb-2 text-center">선물 코드</p>
+              <p className="font-sans text-2xl font-bold tracking-[0.3em] text-text text-center">{giftCode.code}</p>
+              <p className="font-sans text-xs text-text-sub mt-3 text-center">
+                유효기간: 6개월 ({new Date(giftCode.expires_at).toLocaleDateString('ko-KR')}까지)
               </p>
-            )}
-            <p className="font-sans text-xs text-text-sub mb-8 animate-fadeUp" style={{ animationDelay: '0.9s', opacity: 0 }}>
-              유효기간: 6개월 (만료일 {new Date(giftCode.expires_at).toLocaleDateString('ko-KR')})
-            </p>
-            <button
-              onClick={() => {
-                navigator.clipboard?.writeText(giftCode.code);
-              }}
-              className="px-6 py-3 bg-point text-white rounded-xl font-sans font-medium text-sm
-                         shadow-md transition-all duration-300 hover:bg-point-dark hover:shadow-lg active:scale-95
-                         animate-fadeUp"
-              style={{ animationDelay: '1s', opacity: 0 }}
-            >
-              코드 복사하기
-            </button>
-          </>
+            </div>
+
+            {/* 버튼 영역 */}
+            <div className="space-y-3 animate-fadeUp" style={{ animationDelay: '0.8s', opacity: 0 }}>
+              <button
+                onClick={handleGiftShare}
+                className="w-full py-4 bg-point text-white rounded-2xl font-sans font-bold text-base
+                           shadow-lg transition-all duration-300 hover:bg-point-dark hover:shadow-xl hover:scale-[1.02] active:scale-95
+                           flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                공유하기
+              </button>
+              <p className="font-sans text-xs text-text-sub text-center leading-relaxed">
+                이 화면을 직접 캡처하거나 공유하기 버튼으로 선물 코드를 전달해주세요.
+              </p>
+              <button
+                onClick={handleCopyCode}
+                className="w-full py-3.5 bg-white border border-[#E0DDD8] rounded-2xl font-sans font-medium text-sm text-text
+                           hover:border-point hover:text-point transition-all duration-300 active:scale-95
+                           flex items-center justify-center gap-2"
+              >
+                코드 복사하기
+              </button>
+              <button
+                onClick={() => setCurrentPage('landing')}
+                className="w-full py-3 font-sans text-sm text-text-sub hover:text-text transition-colors"
+              >
+                홈으로 돌아가기
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <div className="w-20 h-20 rounded-full bg-point/15 flex items-center justify-center mb-6 animate-scaleIn">

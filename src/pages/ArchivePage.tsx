@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
 import { PageContainer } from '@/components/PageContainer';
-import { Sparkles, Compass, Lock, X } from '@/components/Icons';
-import { supabase, fetchUserResults, fetchResultById, deleteResult, ResultRow } from '@/lib/supabase';
+import { Sparkles, Compass, Lock, X, Gift } from '@/components/Icons';
+import { supabase, fetchUserResults, fetchResultById, deleteResult, fetchGiftCodesByBuyer, ResultRow, GiftCodeRow } from '@/lib/supabase';
 import { RESIDENTS } from '@/constants/residents';
 import { RESIDENT_IMAGES } from '@/constants/images';
 import type { ResidentKey } from '@/constants/questions';
@@ -20,6 +20,7 @@ export function ArchivePage() {
   const { setCurrentPage, setSelectedResultId, setSelectedResidentKey } = useApp();
   const { user, login } = useAuth();
   const [results, setResults] = useState<ResultRow[] | null>(null);
+  const [giftCodes, setGiftCodes] = useState<GiftCodeRow[] | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -28,6 +29,8 @@ export function ArchivePage() {
     const rows = await fetchUserResults(userId);
     console.log('[Results] Archive - fetchUserResults 결과:', rows.length, '건');
     setResults(rows);
+    const gifts = await fetchGiftCodesByBuyer(userId);
+    setGiftCodes(gifts);
   };
 
   useEffect(() => {
@@ -232,6 +235,61 @@ export function ArchivePage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* 선물 내역 섹션 */}
+          {giftCodes !== null && giftCodes.length > 0 && (
+            <div className="mt-10 animate-fadeUp" style={{ animationDelay: '0.3s', opacity: 0 }}>
+              <div className="flex items-center gap-2 mb-1">
+                <Gift className="w-5 h-5 text-point-dark" />
+                <h2 className="font-batang text-xl text-text">내가 보낸 선물</h2>
+              </div>
+              <p className="font-sans text-sm text-text-sub mb-5">
+                소중한 사람에게 전한 선물들이에요.
+              </p>
+              <div className="space-y-3">
+                {giftCodes.map((gift, i) => {
+                  const delay = `${0.1 + i * 0.06}s`;
+                  const productName = gift.product_type === '탐험권+추가질문' ? '탐험권 플러스' : '탐험권';
+                  return (
+                    <div
+                      key={gift.id}
+                      className="p-4 bg-gradient-to-br from-golden/8 to-golden/3 rounded-2xl border border-golden/25
+                                 transition-all duration-300 hover:shadow-md animate-fadeUp"
+                      style={{ animationDelay: delay, opacity: 0 }}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-batang text-base text-text">{gift.receiver_name || '여행자'}</span>
+                            <span className="px-2 py-0.5 bg-golden/15 text-golden text-xs font-sans font-medium rounded-full">
+                              {productName}
+                            </span>
+                          </div>
+                          <p className="font-sans text-xs text-text-sub">{formatDate(gift.created_at)}</p>
+                        </div>
+                      </div>
+                      {gift.message && (
+                        <p className="font-batang text-sm text-text leading-relaxed mt-2 pt-2 border-t border-golden/15">
+                          "{gift.message}"
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-3">
+                        <span className="font-sans text-xs text-text-sub">코드</span>
+                        <span className="font-sans text-sm font-bold tracking-[0.2em] text-text">{gift.code}</span>
+                        <button
+                          onClick={() => navigator.clipboard?.writeText(gift.code)}
+                          className="ml-auto px-3 py-1.5 bg-white/80 border border-golden/25 rounded-lg font-sans text-xs text-text-sub
+                                     hover:border-point hover:text-point transition-all duration-300 active:scale-95"
+                        >
+                          복사
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

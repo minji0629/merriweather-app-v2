@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/</loc>
+    <loc>https://merriweather.net/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/?page=notice</loc>
+    <loc>https://merriweather.net/?page=notice</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/?page=contact</loc>
+    <loc>https://merriweather.net/?page=contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/?page=terms</loc>
+    <loc>https://merriweather.net/?page=terms</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/?page=privacy</loc>
+    <loc>https://merriweather.net/?page=privacy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/?page=developerNote</loc>
+    <loc>https://merriweather.net/?page=developerNote</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://merriweather-app-pql4.vercel.app/?page=travelPlaza</loc>
+    <loc>https://merriweather.net/?page=travelPlaza</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>

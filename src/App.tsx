@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react';
 import { AppProvider } from '@/store/AppProvider';
 import { AuthProvider } from '@/store/AuthProvider';
 import { useApp } from '@/store/useApp';
@@ -85,6 +86,7 @@ function App() {
         <HamburgerMenu />
         <LoginModal />
         <MarketingConsentModal />
+        <Analytics />
       </AppProvider>
     </AuthProvider>
   );

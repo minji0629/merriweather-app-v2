@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 type NextApiRequest = IncomingMessage & { body?: any; query?: any };
 type NextApiResponse = ServerResponse & {
-  status(code: number): this;
+  status(code: number): NextApiResponse;
   json(body: any): void;
 };
 

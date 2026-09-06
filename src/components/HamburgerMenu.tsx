@@ -74,13 +74,22 @@ export function HamburgerMenu() {
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={handleLoginClick}
-                  className="w-full text-left px-4 py-3 rounded-xl font-sans text-sm text-text
-                             hover:bg-point/5 transition-colors"
-                >
-                  메리웨더 주민 되기
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleLoginClick}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl
+                               bg-[#FEE500] text-[#191919] font-sans font-medium text-sm
+                               shadow-sm transition-all duration-300 hover:shadow-md active:scale-95"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 4C6.5 4 2 7.2 2 11.1c0 2.3 1.5 4.3 3.9 5.7l-.6 1.8c-.1.3.2.6.5.4l2.3-1.3c.6.1 1.3.2 1.9.2.2 0 .4 0 .6-.1-.1-.4-.2-.9-.2-1.3 0-3.4 3.4-6.1 7.6-6.1.3 0 .6 0 .9.1C18.3 6.9 15.5 4 12 4z" />
+                    </svg>
+                    카카오로 로그인
+                  </button>
+                  <p className="font-batang text-xs text-text-sub text-center leading-relaxed">
+                    메리웨더 주민이 되어주세요
+                  </p>
+                </div>
               )}
 
               <div className="my-1 h-px shrink-0 bg-[#E0DDD8]" />

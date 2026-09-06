@@ -11,6 +11,22 @@ import { ShareModal } from '@/components/ShareModal';
 import { buildResultShareUrl, SERVICE_URL } from '@/lib/share';
 import { savePreLoginResult } from '@/lib/authStorage';
 
+function KakaoLoginButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-2xl
+                 bg-[#FEE500] text-[#191919] font-sans font-bold text-base
+                 shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
+    >
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 4C6.5 4 2 7.2 2 11.1c0 2.3 1.5 4.3 3.9 5.7l-.6 1.8c-.1.3.2.6.5.4l2.3-1.3c.6.1 1.3.2 1.9.2.2 0 .4 0 .6-.1-.1-.4-.2-.9-.2-1.3 0-3.4 3.4-6.1 7.6-6.1.3 0 .6 0 .9.1C18.3 6.9 15.5 4 12 4z" />
+      </svg>
+      메리웨더 주민 되기
+    </button>
+  );
+}
+
 const PREMIUM_SECTIONS = [
   { emoji: '🌿', title: '당신이라는 사람', hint: '당신이 세상을 바라보는 방식의 비밀' },
   { emoji: '✨', title: '당신 안에 흐르는 결', hint: '가장 깊은 곳에 흐르는 당신의 본질' },
@@ -332,21 +348,16 @@ export function ResultPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSavePrompt(false)} />
             <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
-              <h2 className="font-batang text-xl text-text mb-2">탐험권 구매를 위해 주민 인증이 필요해요</h2>
+              <h2 className="font-batang text-xl text-text mb-2">로그인 후 이용할 수 있어요</h2>
               <p className="font-sans text-sm text-text-sub mb-6">
-                메리웨더 주민이 되면 결과를 저장하고 언제든 다시 볼 수 있어요.
+                나만을 위해 쓰인 이야기들을 만나보세요
               </p>
-              <button
+              <KakaoLoginButton
                 onClick={() => {
                   setShowSavePrompt(false);
-                  console.log('[ResultPage] 탐험권 login 호출, currentPage:', currentPage);
                   login(currentPage);
                 }}
-                className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
-                           shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
-              >
-                메리웨더 주민 되기
-              </button>
+              />
             </div>
           </div>
         )}
@@ -390,21 +401,16 @@ export function ResultPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowGiftLogin(false)} />
             <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
-              <h2 className="font-batang text-xl text-text mb-2">선물하기를 위해 주민 인증이 필요해요</h2>
+              <h2 className="font-batang text-xl text-text mb-2">로그인 후 이용할 수 있어요</h2>
               <p className="font-sans text-sm text-text-sub mb-6">
-                메리웨더 주민이 되면 소중한 사람에게 탐험권을 선물할 수 있어요.
+                소중한 사람에게 메리웨더의 여정을 선물해보세요
               </p>
-              <button
+              <KakaoLoginButton
                 onClick={() => {
                   setShowGiftLogin(false);
-                  console.log('[ResultPage] 선물 login 호출, currentPage:', currentPage);
                   login(currentPage);
                 }}
-                className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
-                           shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
-              >
-                메리웨더 주민 되기
-              </button>
+              />
             </div>
           </div>
         )}
@@ -414,23 +420,16 @@ export function ResultPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowGiftCodeLogin(false)} />
             <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-point/15 flex items-center justify-center">
-                <Ticket className="w-6 h-6 text-point-dark" />
-              </div>
-              <h2 className="font-batang text-xl text-text mb-2">메리웨더 주민이 되면 선물 코드를 입력할 수 있어요</h2>
+              <h2 className="font-batang text-xl text-text mb-2">로그인 후 이용할 수 있어요</h2>
               <p className="font-sans text-sm text-text-sub mb-6">
-                주민 인증 후 받으신 선물 코드로 탐험권을 활성화할 수 있어요.
+                받은 선물로 나만의 여정을 시작해보세요
               </p>
-              <button
+              <KakaoLoginButton
                 onClick={() => {
                   setShowGiftCodeLogin(false);
                   login(currentPage);
                 }}
-                className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
-                           shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
-              >
-                메리웨더 주민 되기
-              </button>
+              />
             </div>
           </div>
         )}

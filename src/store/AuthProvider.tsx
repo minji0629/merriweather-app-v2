@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (returnPage?: string) => {
     const pageToSave = returnPage || 'landing';
-    console.log('[Auth] login - 저장할 returnPage:', pageToSave);
+    console.log('[Auth] login - 저장할 returnPage:', pageToSave, '| 호출 위치:', new Error().stack?.split('\n')[2]?.trim() || 'unknown');
     saveReturnPage(pageToSave);
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',

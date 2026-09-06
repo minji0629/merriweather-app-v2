@@ -34,7 +34,10 @@ function detectInitialRoute(): { page: Page; sharedResultId: string | null; shar
   const path = window.location.pathname;
   if (path === '/payment/success') return { page: 'paymentSuccess', sharedResultId: null, sharedResultScope: null };
   if (path === '/payment/fail') return { page: 'paymentFail', sharedResultId: null, sharedResultScope: null };
-  if (path === '/auth/callback') return { page: 'authCallback', sharedResultId: null, sharedResultScope: null };
+  if (path === '/auth/callback') {
+    console.log('[AppProvider] /auth/callback 경로 감지 → authCallback 페이지');
+    return { page: 'authCallback', sharedResultId: null, sharedResultScope: null };
+  }
   const sharedMatch = path.match(/^\/result\/([0-9a-fA-F-]{36})$/);
   if (sharedMatch) {
     const params = new URLSearchParams(window.location.search);
@@ -61,6 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sharedResultScope, setSharedResultScope] = useState<'basic' | 'full' | null>(initialRoute.sharedResultScope);
 
   const setCurrentPage = useCallback((page: Page) => {
+    console.log('[AppProvider] setCurrentPage:', page, '| from:', new Error().stack?.split('\n')[2]?.trim() || 'unknown');
     setCurrentPageState((prev) => {
       setPreviousPage(prev);
       return page;

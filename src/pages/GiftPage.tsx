@@ -128,7 +128,24 @@ export function GiftPage() {
                 </div>
                 <span className="font-sans font-bold text-lg text-text">4,990원</span>
               </div>
-              <p className="font-sans text-sm text-text-sub ml-7">전체 결과 10개 섹션 + 루의 편지</p>
+              <div className="mt-3 ml-7 space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">나만을 위한 8가지 심층 분석</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">나에게 맞춰 쓰인 루의 편지</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">루에게 질문 1회</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">결과 영구 저장</span>
+                </div>
+              </div>
             </div>
 
             {/* Gift option 2 */}
@@ -151,11 +168,28 @@ export function GiftPage() {
                   >
                     {selected === 'gift_plus' && <Check className="w-3 h-3 text-white" />}
                   </div>
-                  <span className="font-sans font-medium text-text">탐험권 + 추가 질문 2회</span>
+                  <span className="font-sans font-medium text-text">탐험권 플러스</span>
                 </div>
                 <span className="font-sans font-bold text-lg text-text">6,980원</span>
               </div>
-              <p className="font-sans text-sm text-text-sub ml-7">전체 결과 + 루에게 추가 질문 2회</p>
+              <div className="mt-3 ml-7 space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">위 탐험권 혜택 모두 포함</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">당신이 함께 걷는 법 (나만의 관계 이야기)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">당신의 빛을 키우는 방법 (나만의 성장 이야기)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-point-dark text-xs">✦</span>
+                  <span className="font-sans text-xs text-text-sub">루에게 질문 3회 (기본 1회 + 추가 2회)</span>
+                </div>
+              </div>
             </div>
           </div>
 

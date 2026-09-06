@@ -34,6 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // URL 파라미터는 콜백까지 유지됨
     const redirectUrl = new URL(window.location.origin + '/auth/callback');
     redirectUrl.searchParams.set('return_page', pageToSave);
+    console.log('[Auth] login - redirectTo URL:', redirectUrl.toString());
+    console.log('[Auth] login - return_page 파라미터:', redirectUrl.searchParams.get('return_page'));
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {

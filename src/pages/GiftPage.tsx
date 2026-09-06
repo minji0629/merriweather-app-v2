@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
 import { PageContainer } from '@/components/PageContainer';
-import { Gift, Check, Sparkles, MessageCircle, Link2 } from '@/components/Icons';
+import { Gift, Check, Sparkles, MessageCircle, Link2, Lock } from '@/components/Icons';
 import { TermsAgreement } from '@/components/TermsAgreement';
 import { requestPayment, ProductId } from '@/lib/portone';
 import { saveGiftInfo } from '@/lib/authStorage';
 
 export function GiftPage() {
   const { setCurrentPage } = useApp();
+  const { user, login } = useAuth();
   const [recipient, setRecipient] = useState('');
   const [message, setMessage] = useState('');
   const [selected, setSelected] = useState<ProductId>('gift_basic');
@@ -29,6 +30,42 @@ export function GiftPage() {
     window.addEventListener('pageshow', handlePageShow);
     return () => window.removeEventListener('pageshow', handlePageShow);
   }, []);
+
+  if (!user) {
+    return (
+      <PageContainer className="bg-base">
+        <div className="overflow-y-auto scrollbar-hide flex-1 min-h-0">
+          <div className="px-6 pt-10 pb-8">
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setCurrentPage('landing')}
+                className="font-playfair text-sm font-bold tracking-[0.12em] text-text-sub hover:text-text transition-colors"
+              >
+                MERRIWEATHER
+              </button>
+              <span className="font-sans text-sm text-text-sub">선물하기</span>
+            </div>
+            <div className="flex flex-col items-center justify-center text-center py-24 animate-fadeUp">
+              <div className="w-20 h-20 rounded-full bg-point/15 flex items-center justify-center mb-6">
+                <Lock className="w-10 h-10 text-point" />
+              </div>
+              <h1 className="font-batang text-2xl text-text mb-3">로그인 후 이용할 수 있어요.</h1>
+              <p className="font-sans text-sm text-text-sub mb-8">
+                메리웨더 주민이 되면 소중한 사람에게 탐험권을 선물할 수 있어요.
+              </p>
+              <button
+                onClick={() => login('gift')}
+                className="px-8 py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
+                           shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
+              >
+                메리웨더 주민 되기
+              </button>
+            </div>
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
 
   const handlePay = async () => {
     if (!recipient.trim() || !agreed) return;

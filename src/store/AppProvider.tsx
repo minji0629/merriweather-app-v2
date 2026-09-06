@@ -32,6 +32,7 @@ function loadPersistedState(): PersistedState {
 function detectInitialRoute(): { page: Page; sharedResultId: string | null; sharedResultScope: 'basic' | 'full' | null } {
   if (typeof window === 'undefined') return { page: 'landing', sharedResultId: null, sharedResultScope: null };
   const path = window.location.pathname;
+  console.log('[AppProvider] detectInitialRoute - pathname:', path, '| search:', window.location.search, '| hash:', window.location.hash);
   if (path === '/payment/success') return { page: 'paymentSuccess', sharedResultId: null, sharedResultScope: null };
   if (path === '/payment/fail') return { page: 'paymentFail', sharedResultId: null, sharedResultScope: null };
   if (path === '/auth/callback') {

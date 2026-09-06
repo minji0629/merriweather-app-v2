@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 type NextApiRequest = IncomingMessage & { body?: any; query?: any };
 type NextApiResponse = ServerResponse & {
-  status(code: number): NextApiResponse;
+  status(code: number): this;
   json(body: any): void;
 };
 
@@ -50,7 +50,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.error('[api/claude] ANTHROPIC_API_KEY env var not set');
     return sendJson(res, 500, { error: 'ANTHROPIC_API_KEY not configured' });
   }
 
@@ -71,7 +70,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!apiRes.ok) {
       const errText = await apiRes.text();
-      console.error('[api/claude] Anthropic API error:', apiRes.status, errText);
       return sendJson(res, 502, {
         error: `Claude API error (${apiRes.status})`,
         detail: errText,
@@ -81,13 +79,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const data = await apiRes.json();
     const text: string | undefined = data?.content?.[0]?.text;
     if (typeof text !== 'string') {
-      console.error('[api/claude] Unexpected response shape:', JSON.stringify(data));
       return sendJson(res, 502, { error: 'Unexpected response from Claude' });
     }
 
     return sendJson(res, 200, { text: text.trim() });
   } catch (err) {
-    console.error('[api/claude] Request failed:', err);
     return sendJson(res, 500, {
       error: err instanceof Error ? err.message : 'Unknown error',
     });

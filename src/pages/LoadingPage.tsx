@@ -24,58 +24,33 @@ export function LoadingPage() {
     setSecondResidentKey(secondKey);
     setSelectedResidentKey(null);
 
-    console.log('[Results] LoadingPage - 주민 배정 완료:', { key, secondKey, isLoggedIn: !!user, userId: user?.id, nickname });
 
     if (key) {
       const anonymousUserId = !user && typeof crypto !== 'undefined' ? crypto.randomUUID() : null;
       const resultUserId = user?.id ?? anonymousUserId;
       const resultNickname = user?.nickname ?? nickname ?? '여행자';
       if (!resultUserId) return;
-      console.log('[Results] LoadingPage - 결과 저장 시작:', { userId: resultUserId, residentKey: key });
       upsertUser(resultUserId, resultNickname, user ? marketingConsent : { kakao: false, email: false }, user?.email ?? undefined)
         .then((dbUser) => {
           if (!dbUser) {
-            console.error('[Results] LoadingPage - upsertUser 실패: null 반환');
             return null;
           }
-          console.log('[Results] LoadingPage - upsertUser 성공:', dbUser.id);
           return saveFreeResult(dbUser.id, key, { answers });
         })
         .then((result) => {
           if (result) {
-            console.log('[Results] LoadingPage - saveFreeResult 성공:', result.id);
             setSelectedResultId(result.id);
             saveResultId(result.id);
-            console.log('[Payment] 결제 전 result_id 저장:', result.id);
           } else {
-            console.error('[Results] LoadingPage - saveFreeResult 실패: null 반환');
           }
         })
-        .catch((err) => console.error('[Results] LoadingPage - 저장 예외:', err));
+        .catch(() => {});
     } else {
-      console.log('[Results] LoadingPage - 비로그인 상태, results 테이블에 저장하지 않음 (나중에 로그인 시 저장됨)');
     }
 
     const debug = calculateResidentDebug(answers);
     const dimScores = debug.dimScores;
     const rs = debug.residentScores;
-
-    console.group('%c[주민 배정 알고리즘 결과]', 'color:#4A9E8E; font-weight:bold; font-size:14px;');
-    console.log('%c1. 차원별 최종 점수', 'color:#3A8474; font-weight:bold;');
-    console.log(JSON.stringify(dimScores, null, 2));
-    console.log('%c2. 문항별 선택과 점수', 'color:#3A8474; font-weight:bold;');
-    console.log(JSON.stringify(answers.map((a, i) => ({ Q: i + 1, scores: a.scores })), null, 2));
-    console.log('%c3. Q24 주민별 가중치', 'color:#3A8474; font-weight:bold;');
-    console.table(debug.residentWeights);
-    console.log('%c4. 8명 주민별 매칭 점수', 'color:#3A8474; font-weight:bold;');
-    console.log(JSON.stringify(rs, null, 2));
-    console.log('%c5. 주민 순위 (내림차순)', 'color:#3A8474; font-weight:bold;');
-    console.log(JSON.stringify(debug.sorted, null, 2));
-    console.log(
-      `%c6. 최종 배정 주민: ${RESIDENTS[key].name} (${key})`,
-      'color:#4A9E8E; font-weight:bold; font-size:13px;',
-    );
-    console.groupEnd();
 
     const timer = setTimeout(() => setCurrentPage('result'), 3000);
     return () => clearTimeout(timer);

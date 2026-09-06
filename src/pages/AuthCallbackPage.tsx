@@ -15,7 +15,6 @@ import { useAuth } from '@/store/useAuth';
 import type { ResidentKey } from '@/constants/questions';
 
 export function AuthCallbackPage() {
-  console.log('[Auth Callback] ===== 컴포넌트 마운트 =====', '| URL:', window.location.href);
   const { setCurrentPage, residentKey, answers, setSelectedResultId, setSelectedResidentKey } = useApp();
   const { setUser, marketingConsent } = useAuth();
   const [error, setError] = useState('');
@@ -34,7 +33,6 @@ export function AuthCallbackPage() {
       const fromStorage = loadReturnPage();
       const fromUrl = new URLSearchParams(window.location.search).get('return_page');
       savedReturnPage.current = fromStorage || fromUrl || null;
-      console.log('[Auth Callback] returnPage 캡처:', savedReturnPage.current, '| fromStorage:', fromStorage, '| fromUrl:', fromUrl);
     }
 
     let cancelled = false;
@@ -60,7 +58,6 @@ export function AuthCallbackPage() {
 
         const dbUser = await upsertUser(authUser.id, nickname, marketingConsent, email ?? undefined);
         if (cancelled) return;
-        console.log('[Auth Callback] upsertUser 결과:', dbUser);
 
         if (dbUser) {
           const preLogin = loadPreLoginResult();
@@ -68,7 +65,6 @@ export function AuthCallbackPage() {
           const effectiveResidentKey = (preLogin?.residentKey ?? residentKey ?? '') as ResidentKey;
 
           if (preLogin) {
-            console.log('[Auth Callback] pre-login 결과 복원:', preLogin);
           }
 
           if (pendingResultId) {
@@ -131,7 +127,6 @@ export function AuthCallbackPage() {
               await upsertQuestions(authUser.id, pendingResultId, pending.productType);
             }
           } catch (err) {
-            console.error('[Auth Callback] pending 결제 저장 실패:', err);
           }
           clearPendingPurchase();
         }
@@ -143,26 +138,21 @@ export function AuthCallbackPage() {
         // returnPage를 localStorage에서 다시 한번 확인 (ref가 null일 경우 대비)
         const returnPage = savedReturnPage.current || loadReturnPage();
         const targetPage = (returnPage as 'landing' | 'nickname' | 'result' | 'payment' | 'authCallback') || 'landing';
-        console.log('[Auth Callback] 최종 이동:', targetPage, '| returnPage:', returnPage, '| savedRef:', savedReturnPage.current);
         if (returnPage === 'result') {
-          console.log('[Auth Callback] returnPage=result → 결과 페이지로 이동 확인');
         }
         setCurrentPage(targetPage);
         // navigation 완료 후에 returnPage 삭제
         clearReturnPage();
       } catch (err) {
         if (cancelled) return;
-        console.error('[Auth Callback] 실패:', err);
         setError(err instanceof Error ? err.message : '로그인에 실패했어요.');
       }
     };
 
     // onAuthStateChange를 가장 먼저 설정하여 SIGNED_IN 이벤트를 놓치지 않도록 함
     // 모바일 전체 페이지 리다이렉트에서 PKCE 코드 교환 완료 시 SIGNED_IN이 발생
-    console.log('[Auth Callback] onAuthStateChange 리스너 설정');
     const { data: subData } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
-      console.log('[Auth Callback] onAuthStateChange:', event, !!session);
       // SIGNED_IN 이벤트 대기 (모바일 PKCE 교환 완료 시점)
       // INITIAL_SESSION도 세션이 이미 있는 경우(교환 완료 후 리스너 설정)를 대비해 처리
       if ((event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) && session) {
@@ -175,13 +165,10 @@ export function AuthCallbackPage() {
     // getSession()도 병렬로 시도 — 세션이 이미 있다면 빠르게 처리
     (async () => {
       try {
-        console.log('[Auth Callback] getSession 시도');
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (cancelled) return;
-        console.log('[Auth Callback] getSession:', { sessionError, hasSession: !!sessionData.session });
 
         if (sessionError) {
-          console.error('[Auth Callback] getSession error:', sessionError);
         }
 
         if (sessionData.session && !processStartedRef.current) {
@@ -190,7 +177,6 @@ export function AuthCallbackPage() {
         }
       } catch (err) {
         if (cancelled) return;
-        console.error('[Auth Callback] getSession 실패:', err);
       }
     })();
 
@@ -198,7 +184,6 @@ export function AuthCallbackPage() {
     // 모바일에서 PKCE 교환이 지연되는 경우 최후의 안전망
     timeoutId = setTimeout(async () => {
       if (cancelled || navigatedRef.current) return;
-      console.log('[Auth Callback] 타임아웃, 세션 재확인');
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         if (cancelled || navigatedRef.current) return;
@@ -223,7 +208,6 @@ export function AuthCallbackPage() {
       // effect가 재실행될 때 새 effect가 정상적으로 processSession을 실행할 수 있도록
       if (!navigatedRef.current) {
         processStartedRef.current = false;
-        console.log('[Auth Callback] cleanup: processStartedRef 리셋 (navigation 미완료)');
       }
     };
   }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId, setSelectedResidentKey]);

@@ -18,7 +18,6 @@ export function AuthCallbackPage() {
   const { setCurrentPage, residentKey, answers, setSelectedResultId, setSelectedResidentKey } = useApp();
   const { setUser, marketingConsent } = useAuth();
   const [error, setError] = useState('');
-  const processingRef = useRef(false);
   const navigatedRef = useRef(false);
   const processStartedRef = useRef(false);
 
@@ -27,9 +26,6 @@ export function AuthCallbackPage() {
   const savedReturnPage = useRef<string | null>(null);
 
   useEffect(() => {
-    if (processingRef.current) return;
-    processingRef.current = true;
-
     // 동기적으로 returnPage를 캡처 (effect 재실행 시에도 안전)
     if (!savedReturnPage.current) {
       savedReturnPage.current = loadReturnPage();
@@ -213,7 +209,6 @@ export function AuthCallbackPage() {
 
     return () => {
       cancelled = true;
-      processingRef.current = false;
       if (unsub) { unsub(); unsub = null; }
       if (timeoutId) clearTimeout(timeoutId);
     };

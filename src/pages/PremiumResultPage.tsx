@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
 import { PageContainer } from '@/components/PageContainer';
@@ -70,6 +70,8 @@ export function PremiumResultPage() {
   const [showShareChoiceModal, setShowShareChoiceModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareContent, setShareContent] = useState<ShareContent | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmedRef = useRef(false);
 
   // AI 텍스트(결/편지) 로드 — 저장된 값이 있으면 그대로 사용, 없으면 생성 후 저장
   useEffect(() => {
@@ -220,6 +222,20 @@ export function PremiumResultPage() {
   }, [RESULT, effectiveKey, secondKey, nickname, selectedResultId]);
 
   const isPlusUser = productType === 'expedition_plus' || productType === '탐험권+추가질문';
+
+  // 모바일 브라우저 뒤로가기 감지 — 결과 페이지에서 나가려 할 때 확인
+  useEffect(() => {
+    if (previousPage === 'archive') return;
+    const handlePopState = (e: PopStateEvent) => {
+      if (exitConfirmedRef.current) return;
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      setShowExitConfirm(true);
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [previousPage]);
 
   // 질문 로드 — result_id 기준으로 questions 테이블에서 question_history 불러오기
   useEffect(() => {
@@ -429,7 +445,7 @@ export function PremiumResultPage() {
               </button>
             ) : (
               <button
-                onClick={() => setCurrentPage('landing')}
+                onClick={() => setShowExitConfirm(true)}
                 className="font-playfair text-sm font-bold tracking-[0.12em] text-text-sub hover:text-text transition-colors"
               >
                 MERRIWEATHER
@@ -692,6 +708,34 @@ export function PremiumResultPage() {
           </div>
         </div>
       </div>
+
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowExitConfirm(false)} />
+          <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
+            <h2 className="font-batang text-xl text-text mb-2">결과를 나가시겠어요?</h2>
+            <p className="font-sans text-sm text-text-sub mb-6 leading-relaxed">
+              결과 페이지를 나가면 결과가 초기화될 수 있어요.<br />정말 나가실 건가요?
+            </p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => { exitConfirmedRef.current = true; setShowExitConfirm(false); setCurrentPage('landing'); }}
+                className="w-full py-3.5 bg-point text-white rounded-2xl font-sans font-medium text-sm
+                           shadow-lg transition-all duration-300 hover:bg-point-dark hover:shadow-xl active:scale-95"
+              >
+                나가기
+              </button>
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="w-full py-3.5 bg-white text-text-sub rounded-2xl font-sans font-medium text-sm
+                           border border-[#E0DDD8] transition-all duration-300 hover:border-point hover:text-point active:scale-95"
+              >
+                계속 보기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showExtraModal && (
         <ExtraQuestionsModal open={showExtraModal} onClose={() => setShowExtraModal(false)} />

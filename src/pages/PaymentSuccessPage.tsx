@@ -53,10 +53,8 @@ export function PaymentSuccessPage() {
       const productId = params.get('product_id') as ProductId | null;
       const impSuccess = params.get('imp_success');
 
-      console.log('[Payment Success] 파라미터:', { impUid, merchantUid, amount, productId, impSuccess });
 
       if (impSuccess === 'false') {
-        console.warn('[Payment Success] 결제 취소/실패 (imp_success=false)');
         if (!cancelled) setCurrentPage('payment');
         return;
       }
@@ -71,7 +69,6 @@ export function PaymentSuccessPage() {
           const candidate = parts.slice(1, -1).join('-') as ProductId;
           if (VALID_PRODUCT_IDS.includes(candidate)) {
             resolvedProductId = candidate;
-            console.log('[Payment Success] merchant_uid에서 product_id 추출:', resolvedProductId);
           }
         }
       }
@@ -80,12 +77,10 @@ export function PaymentSuccessPage() {
       let resolvedAmount: number | null = amount ? Number(amount) : null;
       if (resolvedAmount === null && resolvedProductId) {
         resolvedAmount = PRODUCT_AMOUNT_MAP[resolvedProductId] ?? null;
-        console.log('[Payment Success] amount 누락, product_id로 금액 결정:', resolvedAmount);
       }
 
       const hasValidParams = impUid && merchantUid && resolvedAmount;
       if (!hasValidParams) {
-        console.warn('[Payment Success] 필수 파라미터 누락');
         if (!cancelled) setStatus('done');
         return;
       }
@@ -93,25 +88,18 @@ export function PaymentSuccessPage() {
       const isGift = resolvedProductId === 'gift_basic' || resolvedProductId === 'gift_plus';
       const productType = resolvedProductId ? (PRODUCT_TYPE_MAP[resolvedProductId] ?? '탐험권') : '탐험권';
 
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const { data: sessionData } = await supabase.auth.getSession();
       if (cancelled) return;
-      console.log('[Payment Success] getSession:', {
-        hasSession: !!sessionData.session,
-        sessionError: sessionError?.message,
-      });
 
       let userId: string | null = null;
 
       if (sessionData.session) {
         userId = sessionData.session.user.id;
-        console.log('[Payment Success] 세션에서 사용자 ID 확인:', userId);
       } else {
         userId = loadUserId();
-        console.log('[Payment Success] localStorage 사용자 ID:', userId);
       }
 
       if (!userId) {
-        console.warn('[Payment Success] 사용자 ID 없음 - 임시 저장 후 로그인 필요');
         const pending: PendingPurchase = {
           impUid: impUid!,
           merchantUid: merchantUid!,
@@ -119,18 +107,10 @@ export function PaymentSuccessPage() {
           productType,
         };
         savePendingPurchase(pending);
-        console.log('[Payment Success] 임시 저장 완료:', pending);
         if (!cancelled) setStatus('needLogin');
         return;
       }
 
-      console.log('[Payment Success] purchases insert 호출:', {
-        userId,
-        productType,
-        amount: resolvedAmount,
-        impUid,
-        merchantUid,
-      });
       try {
         const result = await savePurchase(
           userId,
@@ -141,17 +121,13 @@ export function PaymentSuccessPage() {
         );
         if (cancelled) return;
         if (result) {
-          console.log('[Results] PaymentSuccess - purchases insert 성공:', result.id);
         } else {
-          console.error('[Results] PaymentSuccess - purchases insert 실패: null 반환');
         }
       } catch (err) {
-        console.error('[Results] PaymentSuccess - savePurchase 예외:', err);
       }
 
       if (isGift) {
         const giftInfo = loadGiftInfo();
-        console.log('[Payment Success] 선물 정보:', giftInfo);
 
         try {
           const giftRow = await createGiftCode(
@@ -161,7 +137,6 @@ export function PaymentSuccessPage() {
             productType,
           );
           if (cancelled) return;
-          console.log('[Payment Success] createGiftCode 결과:', giftRow);
 
           if (giftRow) {
             if (!cancelled) {
@@ -171,29 +146,22 @@ export function PaymentSuccessPage() {
             }
             return;
           } else {
-            console.error('[Payment Success] createGiftCode 실패');
           }
         } catch (err) {
-          console.error('[Payment Success] createGiftCode 예외:', err);
         }
       }
 
       const savedResultId = loadResultId();
-      console.log('[Payment] 결제 전 저장된 result_id:', savedResultId);
 
       let targetResultId: string | null = savedResultId;
 
       if (targetResultId) {
         try {
-          console.log('[Payment] markResultPaid 호출, result_id:', targetResultId, 'productType:', productType);
           const ok = await markResultPaid(targetResultId, productType);
           if (cancelled) return;
-          console.log('[Payment] markResultPaid 결과:', ok);
         } catch (err) {
-          console.error('[Payment] markResultPaid 예외:', err);
         }
       } else {
-        console.error('[Payment] 저장된 result_id 없음 - 결제 전 saveFreeResult가 선행되지 않았을 수 있습니다.');
       }
 
       const { data: resultRow } = await supabase
@@ -202,23 +170,18 @@ export function PaymentSuccessPage() {
         .eq('id', targetResultId ?? '')
         .maybeSingle();
       if (cancelled) return;
-      console.log('[Payment] 결제 후 불러온 result_id:', resultRow?.id ?? null);
-      console.log('[Payment] 표시된 주민 키:', resultRow?.resident_key ?? null);
 
       if (targetResultId) {
         try {
           const qRow = await upsertQuestions(userId, targetResultId, productType);
           if (cancelled) return;
-          console.log('[Payment] upsertQuestions 결과:', qRow);
         } catch (err) {
-          console.error('[Payment] upsertQuestions 예외:', err);
         }
       }
 
       if (targetResultId) {
         if (!cancelled) {
           setSelectedResultId(targetResultId);
-          console.log('[Payment] selectedResultId 설정:', targetResultId);
         }
       }
 
@@ -246,7 +209,6 @@ export function PaymentSuccessPage() {
   // 로그인 필요 상태 - 로그인 모달 호출
   useEffect(() => {
     if (status !== 'needLogin') return;
-    console.log('[Payment Success] 로그인 페이지로 이동');
     login('authCallback');
   }, [status, login]);
 
@@ -273,7 +235,6 @@ export function PaymentSuccessPage() {
         imageUrl: `${SERVICE_URL}/landing-bg.png`,
       });
     } catch (err) {
-      console.error('[Payment Success] 카카오톡 공유 실패:', err);
       setKakaoError(true);
     }
   };
@@ -302,7 +263,6 @@ export function PaymentSuccessPage() {
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      console.error('[Payment Success] 공유 실패:', err);
       setShareError(true);
       const ok = await copyLink(shareText);
       if (ok) setCopiedShare(true);

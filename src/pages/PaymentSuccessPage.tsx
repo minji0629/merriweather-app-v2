@@ -264,6 +264,7 @@ export function PaymentSuccessPage() {
     const imageUrl = `${SERVICE_URL}/landing-bg.png`;
 
     if (isKakaoAvailable()) {
+      console.log('[Payment Success] 카카오 공유 시작 — KAKAO_JS_KEY 설정됨, giftCode:', giftCode.code);
       try {
         await shareGiftViaKakao({
           senderName,
@@ -272,11 +273,21 @@ export function PaymentSuccessPage() {
           homeUrl: SERVICE_URL,
           imageUrl,
         });
+        console.log('[Payment Success] 카카오 공유 성공');
         return;
       } catch (err) {
         console.error('[Payment Success] 카카오 공유 실패:', err);
+        if (err instanceof Error) {
+          console.error('[Payment Success] 에러 이름:', err.name);
+          console.error('[Payment Success] 에러 메시지:', err.message);
+          console.error('[Payment Success] 에러 스택:', err.stack);
+        } else {
+          console.error('[Payment Success] 알 수 없는 에러 타입:', typeof err, err);
+        }
         setKakaoError(true);
       }
+    } else {
+      console.warn('[Payment Success] VITE_KAKAO_JAVASCRIPT_KEY가 설정되지 않아 폴백으로 전환합니다.');
     }
 
     // 폴백: 네이티브 공유 또는 클립보드 복사

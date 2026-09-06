@@ -15,6 +15,8 @@ import {
 } from '@/lib/authStorage';
 import { PageContainer } from '@/components/PageContainer';
 import { Check, Sparkles, Gift, Share2 } from '@/components/Icons';
+import { shareGiftViaKakao } from '@/lib/kakao';
+import { copyLink } from '@/lib/share';
 const SERVICE_URL = 'https://merriweather.net';
 import type { ProductId } from '@/lib/portone';
 
@@ -255,39 +257,41 @@ export function PaymentSuccessPage() {
   }, [status]);
 
   const [shareError, setShareError] = useState(false);
+  const [kakaoError, setKakaoError] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
-  const handleGiftShare = async () => {
+  const handleKakaoShare = async () => {
     if (!giftCode) return;
+    setKakaoError(false);
+    try {
+      await shareGiftViaKakao({
+        senderName: user?.nickname ?? '여행자',
+        receiverName: giftCode.receiver_name || '여행자',
+        giftCode: giftCode.code,
+        giftPageUrl: `${SERVICE_URL}/gift?code=${encodeURIComponent(giftCode.code)}`,
+        homeUrl: SERVICE_URL,
+        imageUrl: `${SERVICE_URL}/landing-bg.png`,
+      });
+    } catch (err) {
+      console.error('[Payment Success] 카카오톡 공유 실패:', err);
+      setKakaoError(true);
+    }
+  };
+
+  const handleWebShare = async () => {
+    if (!giftCode) return;
+    setShareError(false);
+    setCopiedShare(false);
     const senderName = user?.nickname ?? '여행자';
+    const receiverName = giftCode.receiver_name || '여행자';
     const giftPageUrl = `${SERVICE_URL}/gift?code=${encodeURIComponent(giftCode.code)}`;
-    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: ${SERVICE_URL}`;
+    const shareText = `${senderName}님이 ${receiverName}님께 메리웨더 선물을 보냈어요 🎁\n\n${giftCode.message}\n\n선물 코드: ${giftCode.code}\n\n선물 페이지: ${giftPageUrl}`;
 
     if (!navigator.share) {
-      navigator.clipboard?.writeText(shareText);
+      const ok = await copyLink(shareText);
+      if (ok) setCopiedShare(true);
+      else setShareError(true);
       return;
-    }
-
-    const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [] as File[] });
-
-    if (canShareFiles) {
-      try {
-        const res = await fetch(`${SERVICE_URL}/landing-bg.png`);
-        if (!res.ok) throw new Error(`이미지 로드 실패: ${res.status}`);
-        const blob = await res.blob();
-        const file = new File([blob], 'merriweather-gift.png', { type: blob.type || 'image/png' });
-
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: '메리웨더 선물이 도착했어요 🎁',
-            text: shareText,
-            url: giftPageUrl,
-            files: [file],
-          });
-          return;
-        }
-      } catch (err) {
-        console.warn('[Payment Success] 이미지 첨부 공유 실패, 텍스트만 공유:', err);
-      }
     }
 
     try {
@@ -300,7 +304,8 @@ export function PaymentSuccessPage() {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error('[Payment Success] 공유 실패:', err);
       setShareError(true);
-      navigator.clipboard?.writeText(shareText);
+      const ok = await copyLink(shareText);
+      if (ok) setCopiedShare(true);
     }
   };
 
@@ -364,17 +369,35 @@ export function PaymentSuccessPage() {
             {/* 버튼 영역 */}
             <div className="space-y-3 animate-fadeUp" style={{ animationDelay: '0.8s', opacity: 0 }}>
               <button
-                onClick={handleGiftShare}
+                onClick={handleKakaoShare}
+                className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
+                           shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-95
+                           flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 3C6.48 3 2 6.94 2 11.6c0 2.79 1.63 5.26 4.15 6.85-.2.75-.74 2.7-.85 3.12-.14.53.2.52.42.38.17-.11 2.72-1.85 3.82-2.6.8.12 1.63.19 2.46.19 5.52 0 10-3.94 10-8.6S17.52 3 12 3z"/>
+                </svg>
+                카카오톡으로 공유하기
+              </button>
+              {kakaoError && (
+                <p className="font-sans text-xs text-error text-center leading-relaxed">
+                  카카오톡 공유에 실패했어요. 다른 앱으로 공유하기를 이용해주세요.
+                </p>
+              )}
+              <button
+                onClick={handleWebShare}
                 className="w-full py-4 bg-point text-white rounded-2xl font-sans font-bold text-base
                            shadow-lg transition-all duration-300 hover:bg-point-dark hover:shadow-xl hover:scale-[1.02] active:scale-95
                            flex items-center justify-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
-                선물 공유하기
+                다른 앱으로 공유하기
               </button>
-              <p className="font-sans text-xs text-text-sub text-center leading-relaxed">
-                공유하기 버튼으로 선물 코드와 이미지를 전달해주세요.
-              </p>
+              {copiedShare && (
+                <p className="font-sans text-xs text-point-dark text-center leading-relaxed">
+                  선물 메시지를 클립보드에 복사했어요.
+                </p>
+              )}
               {shareError && (
                 <p className="font-sans text-xs text-error text-center leading-relaxed">
                   공유에 실패했어요. 대신 코드 복사하기를 이용해주세요.

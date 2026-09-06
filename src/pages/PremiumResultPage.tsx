@@ -10,7 +10,6 @@ import {
   fetchUserResults,
   fetchResultById,
   fetchQuestions,
-  fetchLatestQuestionsByUser,
   decrementQuestion,
   saveAiText,
   appendQuestionHistory,
@@ -238,7 +237,7 @@ export function PremiumResultPage() {
       console.log('[Payment] 현재 user_id:', user.id);
       console.log('[Payment] 클릭한 result_id:', targetId);
 
-      // result_id 기준으로 정확히 조회
+      // result_id 기준으로 정확히 조회 (user_id + result_id 모두 일치해야 함)
       let qRow = await fetchQuestions(user.id, targetId);
 
       // user_id 불일치(익명 → 실제 사용자 전환) 시 result_id만으로 재조회
@@ -251,11 +250,6 @@ export function PremiumResultPage() {
         if (rowByResult) {
           qRow = rowByResult as QuestionRow | null;
         }
-      }
-
-      // 여전히 없으면 user_id 기준 최신 행 조회
-      if (!qRow) {
-        qRow = await fetchLatestQuestionsByUser(user.id);
       }
 
       console.log('[Payment] 테이블에서 불러온 횟수:', qRow?.remaining_count ?? 0);

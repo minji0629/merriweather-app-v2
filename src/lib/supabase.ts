@@ -761,6 +761,13 @@ export async function createTravelPost(
   nickname: string,
   userId: string,
 ): Promise<TravelPostRow | null> {
+  console.log('[Supabase] createTravelPost 시작 - userId:', userId, '/ nickname:', nickname);
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const sessionUserId = sessionData.session?.user?.id ?? null;
+  console.log('[Supabase] createTravelPost - 현재 세션 user.id:', sessionUserId);
+  console.log('[Supabase] createTravelPost - 세션 일치 여부:', sessionUserId === userId);
+
   const { data, error } = await supabase
     .from('travel_posts')
     .insert({ title, content, nickname, user_id: userId })
@@ -768,8 +775,10 @@ export async function createTravelPost(
     .maybeSingle();
   if (error) {
     console.error('[Supabase] createTravelPost error:', error.message, '(code:', error.code + ')');
+    console.error('[Supabase] createTravelPost 전체 에러 객체:', JSON.stringify(error, null, 2));
     return null;
   }
+  console.log('[Supabase] createTravelPost 성공:', data);
   return data as TravelPostRow | null;
 }
 

@@ -28,6 +28,7 @@ import { MarketingConsentModal } from '@/components/MarketingConsentModal';
 
 function Router() {
   const { currentPage, sharedResultId } = useApp();
+  console.log('[Router] currentPage:', currentPage);
 
   switch (currentPage) {
     case 'landing':
@@ -57,6 +58,7 @@ function Router() {
     case 'paymentFail':
       return <PaymentFailPage />;
     case 'authCallback':
+      console.log('[Router] AuthCallbackPage 렌더링');
       return <AuthCallbackPage />;
     case 'archive':
       return <ArchivePage />;

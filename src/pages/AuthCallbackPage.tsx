@@ -15,6 +15,7 @@ import { useAuth } from '@/store/useAuth';
 import type { ResidentKey } from '@/constants/questions';
 
 export function AuthCallbackPage() {
+  console.log('[Auth Callback] ===== 컴포넌트 마운트 =====', '| URL:', window.location.href);
   const { setCurrentPage, residentKey, answers, setSelectedResultId, setSelectedResidentKey } = useApp();
   const { setUser, marketingConsent } = useAuth();
   const [error, setError] = useState('');

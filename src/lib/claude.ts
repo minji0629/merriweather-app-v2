@@ -46,19 +46,16 @@ async function callClaude(prompt: string): Promise<string> {
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');
-      console.error('[Claude] API 오류:', res.status, errBody);
       throw new Error(`API error: ${res.status}`);
     }
 
     const data = await res.json();
     const text: string | undefined = data?.text;
     if (typeof text !== 'string' || !text) {
-      console.error('[Claude] 예상치 못한 응답:', data);
       throw new Error('Unexpected response from API');
     }
     return text;
   } catch (err) {
-    console.error('[Claude] API 호출 실패:', err);
     throw err;
   }
 }

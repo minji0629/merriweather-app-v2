@@ -93,6 +93,14 @@ export function HamburgerMenu() {
                 나의 여행 기록
               </button>
 
+              {/* 선물하기 */}
+              <button
+                onClick={() => handleNavigate('gift')}
+                className="w-full text-left px-4 py-3 rounded-xl font-sans text-sm text-text hover:bg-point/5 transition-colors"
+              >
+                선물하기
+              </button>
+
               <div className="my-1 h-px shrink-0 bg-[#E0DDD8]" />
 
               {/* 메리웨더 소식 */}

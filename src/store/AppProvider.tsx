@@ -32,16 +32,13 @@ function loadPersistedState(): PersistedState {
 function detectInitialRoute(): { page: Page; sharedResultId: string | null; sharedResultScope: 'basic' | 'full' | null } {
   if (typeof window === 'undefined') return { page: 'landing', sharedResultId: null, sharedResultScope: null };
   const path = window.location.pathname;
-  console.log('[AppProvider] detectInitialRoute - pathname:', path, '| search:', window.location.search, '| hash:', window.location.hash);
   if (path === '/payment/success') return { page: 'paymentSuccess', sharedResultId: null, sharedResultScope: null };
   if (path === '/payment/fail') return { page: 'paymentFail', sharedResultId: null, sharedResultScope: null };
   if (path === '/auth/callback') {
-    console.log('[AppProvider] /auth/callback 경로 감지 → authCallback 페이지');
     return { page: 'authCallback', sharedResultId: null, sharedResultScope: null };
   }
   // 모바일 카카오 OAuth 리다이렉트: /#access_token=... 형태로 오는 경우
   if ((path === '/' || path === '') && window.location.hash.includes('access_token')) {
-    console.log('[AppProvider] hash 기반 OAuth 리다이렉트 감지 → authCallback 페이지');
     return { page: 'authCallback', sharedResultId: null, sharedResultScope: null };
   }
   const sharedMatch = path.match(/^\/result\/([0-9a-fA-F-]{36})$/);
@@ -73,7 +70,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sharedResultScope, setSharedResultScope] = useState<'basic' | 'full' | null>(initialRoute.sharedResultScope);
 
   const setCurrentPage = useCallback((page: Page) => {
-    console.log('[AppProvider] setCurrentPage:', page, '| from:', new Error().stack?.split('\n')[2]?.trim() || 'unknown');
     setCurrentPageState((prev) => {
       setPreviousPage(prev);
       return page;

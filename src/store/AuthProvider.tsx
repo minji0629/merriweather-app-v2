@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // returnPage를 redirectTo URL의 쿼리 파라미터로도 전달
     // 모바일에서 외부 도메인 리다이렉트 시 localStorage/sessionStorage가 사라져도
     // URL 파라미터는 콜백까지 유지됨
-    const redirectUrl = new URL(window.location.origin + '/auth/callback');
+    const redirectUrl = new URL('https://merriweather.net/auth/callback');
     redirectUrl.searchParams.set('return_page', pageToSave);
     console.log('[Auth] login - redirectTo URL:', redirectUrl.toString());
     console.log('[Auth] login - return_page 파라미터:', redirectUrl.searchParams.get('return_page'));

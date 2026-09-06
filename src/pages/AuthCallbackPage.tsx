@@ -28,9 +28,13 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     // 동기적으로 returnPage를 캡처 (effect 재실행 시에도 안전)
+    // 1. localStorage/sessionStorage/cookie에서 복원
+    // 2. URL 쿼리 파라미터에서 return_page 복원 (모바일 크로스 도메인 리다이렉트 대비)
     if (!savedReturnPage.current) {
-      savedReturnPage.current = loadReturnPage();
-      console.log('[Auth Callback] returnPage 캡처:', savedReturnPage.current);
+      const fromStorage = loadReturnPage();
+      const fromUrl = new URLSearchParams(window.location.search).get('return_page');
+      savedReturnPage.current = fromStorage || fromUrl || null;
+      console.log('[Auth Callback] returnPage 캡처:', savedReturnPage.current, '| fromStorage:', fromStorage, '| fromUrl:', fromUrl);
     }
 
     let cancelled = false;

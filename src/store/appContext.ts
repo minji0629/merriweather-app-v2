@@ -12,6 +12,7 @@ export type Page =
   | 'premium'
   | 'payment'
   | 'gift'
+  | 'giftLanding'
   | 'paymentSuccess'
   | 'paymentFail'
   | 'authCallback'

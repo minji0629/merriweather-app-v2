@@ -25,9 +25,7 @@ export function ArchivePage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadResults = async (userId: string) => {
-    console.log('[Results] Archive - fetchUserResults 호출:', { userId });
     const rows = await fetchUserResults(userId);
-    console.log('[Results] Archive - fetchUserResults 결과:', rows.length, '건');
     setResults(rows);
     const gifts = await fetchGiftCodesByBuyer(userId);
     setGiftCodes(gifts);
@@ -46,15 +44,12 @@ export function ArchivePage() {
   }, [user]);
 
   const handleView = async (row: ResultRow, target: 'result' | 'premium' | 'payment') => {
-    console.log('[Archive] 클릭한 result_id:', row.id);
     setSelectedResultId(row.id);
 
     const fetched = await fetchResultById(row.id);
-    console.log('[Archive] Supabase에서 불러온 데이터:', fetched);
 
     const key = (fetched?.resident_key ?? row.resident_key) as ResidentKey | null;
     setSelectedResidentKey(key);
-    console.log('[Archive] 실제 표시되는 주민 키:', key);
 
     setCurrentPage(target);
   };

@@ -317,6 +317,7 @@ export function ResultPage() {
               <button
                 onClick={() => {
                   setShowSavePrompt(false);
+                  console.log('[ResultPage] 탐험권 login 호출, currentPage:', currentPage);
                   login(currentPage);
                 }}
                 className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
@@ -368,6 +369,7 @@ export function ResultPage() {
               <button
                 onClick={() => {
                   setShowGiftLogin(false);
+                  console.log('[ResultPage] 선물 login 호출, currentPage:', currentPage);
                   login(currentPage);
                 }}
                 className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base

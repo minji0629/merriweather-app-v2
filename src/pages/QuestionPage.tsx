@@ -3,7 +3,7 @@ import { useApp } from '@/store/useApp';
 import { PageContainer } from '@/components/PageContainer';
 import { QUESTIONS, TOTAL_QUESTIONS, Choice } from '@/constants/questions';
 import { CHAPTER_BG_1, CHAPTER_BG_2, CHAPTER_BG_3, CHAPTER_BG_4, CHAPTER_BG_5, CHAPTER_BG_6 } from '@/constants/images';
-import { ChevronRight } from '@/components/Icons';
+import { ChevronRight, ArrowLeft } from '@/components/Icons';
 
 /** 마침표 뒤엔 줄바꿈, 쉼표 뒤엔 자연스러운 줄바꿈 기회 부여 */
 function formatLineBreaks(text: string): ReactNode[] {
@@ -159,6 +159,14 @@ export function QuestionPage() {
     setPhase('fadein');
   }, []);
 
+  const goPrevQuestion = useCallback(() => {
+    if (qIndex <= 0 || selected) return;
+    setQIndex((prev) => prev - 1);
+    setSelected(null);
+    setNextChapter(null);
+    setPhase('fadein');
+  }, [qIndex, selected]);
+
   // Handle fadein → question transition
   useEffect(() => {
     if (phase === 'fadein') {
@@ -221,9 +229,23 @@ export function QuestionPage() {
         <div className={`relative z-10 flex flex-col max-w-[430px] mx-auto transition-opacity duration-300 ${phase === 'transition' ? 'opacity-0' : 'opacity-100'}`} style={{ height: '100vh' }}>
           {/* Top bar: chapter badge + progress — fixed at very top */}
           <div className="flex items-center justify-between w-full flex-shrink-0" style={{ padding: '1rem 3.5rem 0 1rem' }}>
-            <span className="px-3 py-1 bg-point text-white text-xs font-sans font-medium rounded-full shadow-md">
-              {question.chapterName}
-            </span>
+            <div className="flex items-center gap-2">
+              {qIndex > 0 && !selected && phase === 'question' && (
+                <button
+                  onClick={goPrevQuestion}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-white/80 backdrop-blur-sm
+                             text-text-sub hover:text-point-dark text-xs font-sans rounded-full
+                             border border-[#E0DDD8] hover:border-point/50
+                             transition-all duration-300 active:scale-95"
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  이전
+                </button>
+              )}
+              <span className="px-3 py-1 bg-point text-white text-xs font-sans font-medium rounded-full shadow-md">
+                {question.chapterName}
+              </span>
+            </div>
             <span className="text-text/70 text-xs font-sans font-medium">
               {qIndex + 1} / {TOTAL_QUESTIONS}
             </span>

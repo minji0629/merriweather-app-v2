@@ -17,6 +17,14 @@ import { PageContainer } from '@/components/PageContainer';
 import { Check, Sparkles, Gift, Share2 } from '@/components/Icons';
 import type { ProductId } from '@/lib/portone';
 
+const PRODUCT_AMOUNT_MAP: Record<ProductId, number> = {
+  expedition: 4990,
+  expedition_plus: 6980,
+  extra_questions: 1990,
+  gift_basic: 4990,
+  gift_plus: 6980,
+};
+
 const PRODUCT_TYPE_MAP: Record<ProductId, string> = {
   expedition: '탐험권',
   expedition_plus: '탐험권+추가질문',
@@ -50,13 +58,6 @@ export function PaymentSuccessPage() {
         return;
       }
 
-      const hasValidParams = impUid && merchantUid && amount;
-      if (!hasValidParams) {
-        console.warn('[Payment Success] 필수 파라미터 누락');
-        if (!cancelled) setStatus('done');
-        return;
-      }
-
       // 모바일 결제 시 PG사 리다이렉트에서 product_id가 누락될 수 있으므로
       // merchant_uid(형식: merriweather-{productId}-{timestamp})에서 추출
       const VALID_PRODUCT_IDS: ProductId[] = ['expedition', 'expedition_plus', 'extra_questions', 'gift_basic', 'gift_plus'];
@@ -70,6 +71,20 @@ export function PaymentSuccessPage() {
             console.log('[Payment Success] merchant_uid에서 product_id 추출:', resolvedProductId);
           }
         }
+      }
+
+      // amount가 null인 경우(모바일 결제 등) product_id로 금액 결정
+      let resolvedAmount: number | null = amount ? Number(amount) : null;
+      if (resolvedAmount === null && resolvedProductId) {
+        resolvedAmount = PRODUCT_AMOUNT_MAP[resolvedProductId] ?? null;
+        console.log('[Payment Success] amount 누락, product_id로 금액 결정:', resolvedAmount);
+      }
+
+      const hasValidParams = impUid && merchantUid && resolvedAmount;
+      if (!hasValidParams) {
+        console.warn('[Payment Success] 필수 파라미터 누락');
+        if (!cancelled) setStatus('done');
+        return;
       }
 
       const isGift = resolvedProductId === 'gift_basic' || resolvedProductId === 'gift_plus';
@@ -97,7 +112,7 @@ export function PaymentSuccessPage() {
         const pending: PendingPurchase = {
           impUid: impUid!,
           merchantUid: merchantUid!,
-          amount: Number(amount),
+          amount: resolvedAmount!,
           productType,
         };
         savePendingPurchase(pending);
@@ -109,7 +124,7 @@ export function PaymentSuccessPage() {
       console.log('[Payment Success] purchases insert 호출:', {
         userId,
         productType,
-        amount: Number(amount),
+        amount: resolvedAmount,
         impUid,
         merchantUid,
       });
@@ -117,7 +132,7 @@ export function PaymentSuccessPage() {
         const result = await savePurchase(
           userId,
           productType,
-          Number(amount),
+          resolvedAmount!,
           impUid!,
           merchantUid!,
         );

@@ -39,6 +39,11 @@ function detectInitialRoute(): { page: Page; sharedResultId: string | null; shar
     console.log('[AppProvider] /auth/callback 경로 감지 → authCallback 페이지');
     return { page: 'authCallback', sharedResultId: null, sharedResultScope: null };
   }
+  // 모바일 카카오 OAuth 리다이렉트: /#access_token=... 형태로 오는 경우
+  if ((path === '/' || path === '') && window.location.hash.includes('access_token')) {
+    console.log('[AppProvider] hash 기반 OAuth 리다이렉트 감지 → authCallback 페이지');
+    return { page: 'authCallback', sharedResultId: null, sharedResultScope: null };
+  }
   const sharedMatch = path.match(/^\/result\/([0-9a-fA-F-]{36})$/);
   if (sharedMatch) {
     const params = new URLSearchParams(window.location.search);

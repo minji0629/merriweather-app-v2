@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '@/store/useApp';
 import { PageContainer } from '@/components/PageContainer';
-import { Gift, ArrowRight, Sparkles } from '@/components/Icons';
+import { Gift, ArrowRight, Sparkles, Copy, Check } from '@/components/Icons';
 
 export function GiftLandingPage() {
   const { setCurrentPage } = useApp();
@@ -11,6 +11,26 @@ export function GiftLandingPage() {
     const params = new URLSearchParams(window.location.search);
     return params.get('code');
   });
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleStart = () => {
     setCurrentPage('landing');
@@ -56,12 +76,46 @@ export function GiftLandingPage() {
 
             {/* Gift code display */}
             {code && (
-              <div className="mb-10 animate-fadeUp" style={{ animationDelay: '0.45s', opacity: 0 }}>
+              <div className="mb-6 animate-fadeUp" style={{ animationDelay: '0.45s', opacity: 0 }}>
                 <p className="font-sans text-xs text-text-sub mb-3 tracking-wide">선물 코드</p>
                 <div className="px-8 py-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-point/20 shadow-md">
                   <span className="font-sans text-2xl font-bold tracking-[0.3em] text-point-dark">
                     {code}
                   </span>
+                </div>
+              </div>
+            )}
+
+            {/* Copy code button */}
+            {code && (
+              <button
+                onClick={handleCopyCode}
+                className="group flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-sm rounded-xl
+                           border border-point/20 font-sans text-sm text-point-dark shadow-sm
+                           transition-all duration-300 hover:border-point hover:shadow-md hover:scale-[1.02] active:scale-95
+                           animate-fadeUp mb-10"
+                style={{ animationDelay: '0.5s', opacity: 0 }}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>코드가 복사됐어요!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>코드 복사하기</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Toast notification */}
+            {copied && (
+              <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-fadeUp">
+                <div className="flex items-center gap-2 px-5 py-3 bg-text text-base rounded-2xl shadow-xl">
+                  <Check className="w-4 h-4 text-point-light" />
+                  <span className="font-sans text-sm">코드가 복사됐어요!</span>
                 </div>
               </div>
             )}

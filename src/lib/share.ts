@@ -1,4 +1,4 @@
-export const SERVICE_URL = 'https://merriweather-app-pql4.vercel.app';
+export const SERVICE_URL = 'https://merriweather.net';
 
 export interface ShareContent {
   linkUrl?: string;

@@ -102,8 +102,7 @@ export function ShareModal({ open, content, cardImage, cardName, onClose }: Shar
         <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-point/15 flex items-center justify-center">
           <Share2 className="w-7 h-7 text-point-dark" />
         </div>
-        <h2 className="font-batang text-xl text-text text-center mb-1">나의 주민 알리기</h2>
-        <p className="font-sans text-xs text-text-sub text-center mb-5 break-all">{linkUrl}</p>
+        <h2 className="font-batang text-xl text-text text-center mb-5">나의 주민 알리기</h2>
 
         <div className="space-y-2.5">
           {/* 나의 주민 알리기 — 결과 링크 공유 */}

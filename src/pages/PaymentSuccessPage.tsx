@@ -16,7 +16,7 @@ import {
 import { PageContainer } from '@/components/PageContainer';
 import { Check, Sparkles, Gift, Share2 } from '@/components/Icons';
 import { shareGiftViaKakao, isKakaoAvailable } from '@/lib/kakao';
-import { SERVICE_URL } from '@/lib/share';
+const KAKAO_SERVICE_URL = 'https://merriweather.net';
 import type { ProductId } from '@/lib/portone';
 
 const PRODUCT_AMOUNT_MAP: Record<ProductId, number> = {
@@ -260,8 +260,9 @@ export function PaymentSuccessPage() {
   const handleGiftShare = async () => {
     if (!giftCode) return;
     const senderName = user?.nickname ?? '여행자';
-    const giftPageUrl = `${SERVICE_URL}/gift?code=${giftCode.code}`;
-    const imageUrl = `${SERVICE_URL}/landing-bg.png`;
+    const giftPageUrl = `${KAKAO_SERVICE_URL}/gift?code=${encodeURIComponent(giftCode.code)}`;
+    const homeUrl = KAKAO_SERVICE_URL;
+    const imageUrl = `${KAKAO_SERVICE_URL}/landing-bg.png`;
 
     if (isKakaoAvailable()) {
       console.log('[Payment Success] 카카오 공유 시작 — KAKAO_JS_KEY 설정됨, giftCode:', giftCode.code);
@@ -270,7 +271,7 @@ export function PaymentSuccessPage() {
           senderName,
           giftCode: giftCode.code,
           giftPageUrl,
-          homeUrl: SERVICE_URL,
+          homeUrl,
           imageUrl,
         });
         console.log('[Payment Success] 카카오 공유 성공');
@@ -291,7 +292,7 @@ export function PaymentSuccessPage() {
     }
 
     // 폴백: 네이티브 공유 또는 클립보드 복사
-    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: ${SERVICE_URL}`;
+    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: ${homeUrl}`;
     if (navigator.share) {
       try {
         await navigator.share({

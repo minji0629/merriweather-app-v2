@@ -51,6 +51,9 @@ function detectInitialRoute(): { page: Page; sharedResultId: string | null; shar
     const scope: 'basic' | 'full' | null = raw === 'full' ? 'full' : raw === 'basic' ? 'basic' : null;
     return { page: 'sharedResult', sharedResultId: sharedMatch[1], sharedResultScope: scope };
   }
+  if (path === '/gift') {
+    return { page: 'giftLanding', sharedResultId: null, sharedResultScope: null };
+  }
   return { page: 'landing', sharedResultId: null, sharedResultScope: null };
 }
 

@@ -37,15 +37,26 @@ export function saveMarketingDetail(consent: { kakao: boolean; email: boolean })
 export function saveReturnPage(page: string) {
   try { localStorage.setItem(RETURN_PAGE_KEY, page); } catch { /* ignore */ }
   try { sessionStorage.setItem(RETURN_PAGE_KEY, page); } catch { /* ignore */ }
+  try {
+    document.cookie = `${RETURN_PAGE_KEY}=${encodeURIComponent(page)};path=/;max-age=3600;SameSite=Lax`;
+  } catch { /* ignore */ }
 }
 
 export function loadReturnPage(): string | null {
+  // 1. localStorage
   try {
     const local = localStorage.getItem(RETURN_PAGE_KEY);
     if (local) return local;
   } catch { /* ignore */ }
+  // 2. sessionStorage
   try {
-    return sessionStorage.getItem(RETURN_PAGE_KEY);
+    const session = sessionStorage.getItem(RETURN_PAGE_KEY);
+    if (session) return session;
+  } catch { /* ignore */ }
+  // 3. cookie
+  try {
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${RETURN_PAGE_KEY}=([^;]*)`));
+    if (match?.[1]) return decodeURIComponent(match[1]);
   } catch { /* ignore */ }
   return null;
 }
@@ -53,6 +64,9 @@ export function loadReturnPage(): string | null {
 export function clearReturnPage() {
   try { localStorage.removeItem(RETURN_PAGE_KEY); } catch { /* ignore */ }
   try { sessionStorage.removeItem(RETURN_PAGE_KEY); } catch { /* ignore */ }
+  try {
+    document.cookie = `${RETURN_PAGE_KEY}=;path=/;max-age=0`;
+  } catch { /* ignore */ }
 }
 
 export function saveUserId(userId: string) {

@@ -71,3 +71,6 @@ export function Trash2({ className, style }: IconProps) {
 export function Download({ className, style }: IconProps) {
   return <span className={className} style={{ ...base(className), ...style }}>⬇</span>;
 }
+export function Copy({ className, style }: IconProps) {
+  return <span className={className} style={{ ...base(className), ...style }}>⧉</span>;
+}

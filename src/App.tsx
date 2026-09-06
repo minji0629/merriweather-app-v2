@@ -12,6 +12,7 @@ import { PremiumResultPage } from '@/pages/PremiumResultPage';
 import { SharedResultPage } from '@/pages/SharedResultPage';
 import { PaymentPage } from '@/pages/PaymentPage';
 import { GiftPage } from '@/pages/GiftPage';
+import { GiftLandingPage } from '@/pages/GiftLandingPage';
 import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
 import { PaymentFailPage } from '@/pages/PaymentFailPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
@@ -53,6 +54,8 @@ function Router() {
       return <PaymentPage />;
     case 'gift':
       return <GiftPage />;
+    case 'giftLanding':
+      return <GiftLandingPage />;
     case 'paymentSuccess':
       return <PaymentSuccessPage />;
     case 'paymentFail':

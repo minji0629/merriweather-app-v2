@@ -138,7 +138,10 @@ export function AuthCallbackPage() {
         // returnPage를 localStorage에서 다시 한번 확인 (ref가 null일 경우 대비)
         const returnPage = savedReturnPage.current || loadReturnPage();
         const targetPage = (returnPage as 'landing' | 'nickname' | 'result' | 'payment' | 'authCallback') || 'landing';
-        console.log('[Auth Callback] 이동:', targetPage);
+        console.log('[Auth Callback] 최종 이동:', targetPage, '| returnPage:', returnPage, '| savedRef:', savedReturnPage.current);
+        if (returnPage === 'result') {
+          console.log('[Auth Callback] returnPage=result → 결과 페이지로 이동 확인');
+        }
         setCurrentPage(targetPage);
         // navigation 완료 후에 returnPage 삭제
         clearReturnPage();
@@ -211,6 +214,12 @@ export function AuthCallbackPage() {
       cancelled = true;
       if (unsub) { unsub(); unsub = null; }
       if (timeoutId) clearTimeout(timeoutId);
+      // cleanup 시 processStartedRef 리셋 — StrictMode 재실행이나 의존성 변경으로
+      // effect가 재실행될 때 새 effect가 정상적으로 processSession을 실행할 수 있도록
+      if (!navigatedRef.current) {
+        processStartedRef.current = false;
+        console.log('[Auth Callback] cleanup: processStartedRef 리셋 (navigation 미완료)');
+      }
     };
   }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId, setSelectedResidentKey]);
 

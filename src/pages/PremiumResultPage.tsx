@@ -87,7 +87,6 @@ export function PremiumResultPage() {
       let savedProductType: string | null = null;
 
       if (targetId) {
-        console.log('[Archive] AI 텍스트 로드 시도, result_id:', targetId);
         const row = await fetchResultById(targetId);
         if (cancelled) return;
         savedAiResult = row?.ai_result ?? null;
@@ -95,9 +94,6 @@ export function PremiumResultPage() {
         savedAiRelation = row?.ai_relation ?? null;
         savedAiGrowth = row?.ai_growth ?? null;
         savedProductType = row?.product_type ?? null;
-        console.log('[Archive] 저장된 ai_result:', savedAiResult ? `${savedAiResult.slice(0, 30)}...` : null);
-        console.log('[Archive] 저장된 ai_letter:', savedAiLetter ? `${savedAiLetter.slice(0, 30)}...` : null);
-        console.log('[Archive] 저장된 product_type:', savedProductType);
       }
 
       if (cancelled) return;
@@ -122,7 +118,6 @@ export function PremiumResultPage() {
           setGaulText(text);
           setGaulLoading(false);
           if (targetId) {
-            console.log('[Archive] AI 결 생성 완료, 저장 중...');
             await saveAiText(targetId, 'ai_result', text);
           }
         } catch {
@@ -147,7 +142,6 @@ export function PremiumResultPage() {
           setLetterText(text);
           setLetterLoading(false);
           if (targetId) {
-            console.log('[Archive] AI 편지 생성 완료, 저장 중...');
             await saveAiText(targetId, 'ai_letter', text);
           }
         } catch {
@@ -173,7 +167,6 @@ export function PremiumResultPage() {
             setRelationText(text);
             setRelationLoading(false);
             if (targetId) {
-              console.log('[Archive] AI 관계 나침반 생성 완료, 저장 중...');
               await saveAiText(targetId, 'ai_relation', text);
             }
           } catch {
@@ -203,7 +196,6 @@ export function PremiumResultPage() {
             setGrowthText(text);
             setGrowthLoading(false);
             if (targetId) {
-              console.log('[Archive] AI 성장 나침반 생성 완료, 저장 중...');
               await saveAiText(targetId, 'ai_growth', text);
             }
           } catch {
@@ -247,11 +239,8 @@ export function PremiumResultPage() {
         const results = await fetchUserResults(user.id);
         if (cancelled || results.length === 0) return;
         const latest = results[0];
-        console.log('[Payment] 선택된 result_id 없음, 최신 결과 사용:', latest.id);
         return;
       }
-      console.log('[Payment] 현재 user_id:', user.id);
-      console.log('[Payment] 클릭한 result_id:', targetId);
 
       // result_id 기준으로 정확히 조회 (user_id + result_id 모두 일치해야 함)
       let qRow = await fetchQuestions(user.id, targetId);
@@ -268,8 +257,6 @@ export function PremiumResultPage() {
         }
       }
 
-      console.log('[Payment] 테이블에서 불러온 횟수:', qRow?.remaining_count ?? 0);
-      console.log('[Payment] 저장된 질문 내역:', qRow?.question_history ?? []);
       if (!cancelled) {
         setQuestionRow(qRow);
         setHistory(qRow?.question_history ?? []);

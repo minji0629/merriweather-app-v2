@@ -759,14 +759,15 @@ export async function createTravelPost(
   title: string,
   content: string,
   nickname: string,
+  userId: string,
 ): Promise<TravelPostRow | null> {
   const { data, error } = await supabase
     .from('travel_posts')
-    .insert({ title, content, nickname })
+    .insert({ title, content, nickname, user_id: userId })
     .select()
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] createTravelPost error:', error.message);
+    console.error('[Supabase] createTravelPost error:', error.message, '(code:', error.code + ')');
     return null;
   }
   return data as TravelPostRow | null;

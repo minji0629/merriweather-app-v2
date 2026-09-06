@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
 import { PageContainer } from '@/components/PageContainer';
@@ -37,9 +37,25 @@ export function ResultPage() {
   const [showGiftCodeLogin, setShowGiftCodeLogin] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmedRef = useRef(false);
   const effectiveKey = selectedResidentKey ?? residentKey;
   const RESULT = effectiveKey ? getResidentProfile(effectiveKey) : null;
   const resultShareUrl = selectedResultId ? buildResultShareUrl(selectedResultId, 'basic') : SERVICE_URL;
+
+  // 모바일 브라우저 뒤로가기 감지 — 결과 페이지에서 나가려 할 때 확인
+  useEffect(() => {
+    if (previousPage === 'archive') return;
+    const handlePopState = (e: PopStateEvent) => {
+      if (exitConfirmedRef.current) return;
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      setShowExitConfirm(true);
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [previousPage]);
   const shareContent = RESULT && effectiveKey ? {
     linkUrl: resultShareUrl,
   } : null;
@@ -68,7 +84,12 @@ export function ResultPage() {
                 ← 보관함으로
               </button>
             ) : (
-              <span />
+              <button
+                onClick={() => setShowExitConfirm(true)}
+                className="font-playfair text-sm font-bold tracking-[0.12em] text-text-sub hover:text-text transition-colors"
+              >
+                MERRIWEATHER
+              </button>
             )}
             <button
               onClick={() => setShowShareModal(true)}
@@ -426,6 +447,34 @@ export function ResultPage() {
           </button>
         </div>
       </div>
+
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowExitConfirm(false)} />
+          <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
+            <h2 className="font-batang text-xl text-text mb-2">결과를 나가시겠어요?</h2>
+            <p className="font-sans text-sm text-text-sub mb-6 leading-relaxed">
+              결과 페이지를 나가면 결과가 초기화될 수 있어요.<br />정말 나가실 건가요?
+            </p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => { exitConfirmedRef.current = true; setShowExitConfirm(false); setCurrentPage('landing'); }}
+                className="w-full py-3.5 bg-point text-white rounded-2xl font-sans font-medium text-sm
+                           shadow-lg transition-all duration-300 hover:bg-point-dark hover:shadow-xl active:scale-95"
+              >
+                나가기
+              </button>
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="w-full py-3.5 bg-white text-text-sub rounded-2xl font-sans font-medium text-sm
+                           border border-[#E0DDD8] transition-all duration-300 hover:border-point hover:text-point active:scale-95"
+              >
+                계속 보기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {shareContent && (
         <ShareModal

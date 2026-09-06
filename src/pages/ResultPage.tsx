@@ -34,6 +34,7 @@ export function ResultPage() {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [showGiftLogin, setShowGiftLogin] = useState(false);
   const [showGiftCode, setShowGiftCode] = useState(false);
+  const [showGiftCodeLogin, setShowGiftCodeLogin] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const effectiveKey = selectedResidentKey ?? residentKey;
@@ -347,7 +348,13 @@ export function ResultPage() {
             소중한 사람에게 선물하기
           </button>
           <button
-            onClick={() => setShowGiftCode(true)}
+            onClick={() => {
+              if (!user) {
+                setShowGiftCodeLogin(true);
+              } else {
+                setShowGiftCode(true);
+              }
+            }}
             className="w-full py-3.5 bg-point/10 text-point-dark rounded-2xl font-sans font-medium text-sm
                        border border-point/30 transition-all duration-300 hover:bg-point/15 hover:shadow-md active:scale-95
                        flex items-center justify-center gap-2"
@@ -381,7 +388,33 @@ export function ResultPage() {
           </div>
         )}
 
-        {showGiftCode && <GiftCodeModal onClose={() => setShowGiftCode(false)} />}
+        {/* Gift code login prompt (login required) */}
+        {showGiftCodeLogin && !user && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowGiftCodeLogin(false)} />
+            <div className="relative w-full max-w-sm bg-base rounded-3xl shadow-2xl border border-[#E0DDD8] animate-scaleIn p-6 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-point/15 flex items-center justify-center">
+                <Ticket className="w-6 h-6 text-point-dark" />
+              </div>
+              <h2 className="font-batang text-xl text-text mb-2">메리웨더 주민이 되면 선물 코드를 입력할 수 있어요</h2>
+              <p className="font-sans text-sm text-text-sub mb-6">
+                주민 인증 후 받으신 선물 코드로 탐험권을 활성화할 수 있어요.
+              </p>
+              <button
+                onClick={() => {
+                  setShowGiftCodeLogin(false);
+                  login(currentPage);
+                }}
+                className="w-full py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-sans font-bold text-base
+                           shadow-lg transition-all duration-300 hover:shadow-xl active:scale-95"
+              >
+                메리웨더 주민 되기
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showGiftCode && user && <GiftCodeModal onClose={() => setShowGiftCode(false)} />}
 
         {/* Restart link */}
         <div className="px-6 pb-8 text-center">

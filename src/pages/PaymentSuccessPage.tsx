@@ -35,7 +35,7 @@ const PRODUCT_TYPE_MAP: Record<ProductId, string> = {
 
 export function PaymentSuccessPage() {
   const { setCurrentPage, residentKey, setSelectedResultId } = useApp();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const [status, setStatus] = useState<'processing' | 'done' | 'needLogin' | 'giftDone'>('processing');
   const [giftCode, setGiftCode] = useState<GiftCodeRow | null>(null);
 
@@ -255,15 +255,16 @@ export function PaymentSuccessPage() {
 
   const handleGiftShare = async () => {
     if (!giftCode) return;
-    const shareUrl = `${window.location.origin}/gift?code=${giftCode.code}`;
-    const shareText = `${giftCode.receiver_name}님에게 보내는 선물이 도착했어요.\n메리웨더에서 코드를 입력하면 열어볼 수 있어요.\n\n선물 코드: ${giftCode.code}\n${shareUrl}`;
+    const senderName = user?.nickname ?? '여행자';
+    const giftPageUrl = `${window.location.origin}/gift?code=${giftCode.code}`;
+    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: https://merriweather.net`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '메리웨더 선물',
+          title: '메리웨더 선물이 도착했어요 🎁',
           text: shareText,
-          url: shareUrl,
+          url: giftPageUrl,
         });
       } catch {
         // 공유 취소 시 무시

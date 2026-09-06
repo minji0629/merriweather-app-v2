@@ -165,7 +165,8 @@ export async function shareGiftViaKakao(params: KakaoGiftShareParams): Promise<v
     window.Kakao.Share.sendDefault(shareOptions);
     console.log('[Kakao] sendDefault 호출 완료');
   } catch (err) {
-    console.error('[Kakao] sendDefault 예외:', err);
+    console.error('[Kakao] sendDefault 예외:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     throw err;
   }
 }
+

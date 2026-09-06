@@ -35,15 +35,24 @@ export function saveMarketingDetail(consent: { kakao: boolean; email: boolean })
 }
 
 export function saveReturnPage(page: string) {
-  localStorage.setItem(RETURN_PAGE_KEY, page);
+  try { localStorage.setItem(RETURN_PAGE_KEY, page); } catch { /* ignore */ }
+  try { sessionStorage.setItem(RETURN_PAGE_KEY, page); } catch { /* ignore */ }
 }
 
 export function loadReturnPage(): string | null {
-  return localStorage.getItem(RETURN_PAGE_KEY);
+  try {
+    const local = localStorage.getItem(RETURN_PAGE_KEY);
+    if (local) return local;
+  } catch { /* ignore */ }
+  try {
+    return sessionStorage.getItem(RETURN_PAGE_KEY);
+  } catch { /* ignore */ }
+  return null;
 }
 
 export function clearReturnPage() {
-  localStorage.removeItem(RETURN_PAGE_KEY);
+  try { localStorage.removeItem(RETURN_PAGE_KEY); } catch { /* ignore */ }
+  try { sessionStorage.removeItem(RETURN_PAGE_KEY); } catch { /* ignore */ }
 }
 
 export function saveUserId(userId: string) {

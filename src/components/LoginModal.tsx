@@ -19,7 +19,6 @@ export function LoginModal() {
       hideLogin();
     } catch (e) {
       const msg = e instanceof Error ? e.message : '로그인에 실패했어요.';
-      console.warn('[Kakao] login failed:', e);
       setError(msg);
       setLoading(false);
     }

@@ -452,7 +452,7 @@ export function PremiumResultPage() {
               </button>
             )}
             <button
-              onClick={() => { setShareContent({ linkUrl: selectedResultId ? buildResultShareUrl(selectedResultId, 'basic') : SERVICE_URL }); setShowShareModal(true); }}
+              onClick={() => setShowShareChoiceModal(true)}
               className="px-4 py-2 bg-white text-point-dark rounded-xl font-sans font-medium text-xs
                          border border-point shadow-sm transition-all duration-300 hover:bg-point/5 hover:shadow-md active:scale-95
                          flex items-center gap-1.5"

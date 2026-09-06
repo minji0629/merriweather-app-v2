@@ -20,6 +20,7 @@ export function AuthCallbackPage() {
   const [error, setError] = useState('');
   const processingRef = useRef(false);
   const navigatedRef = useRef(false);
+  const processStartedRef = useRef(false);
 
   // returnPage를 effect 시작 시점에 동기적으로 캡처하여
   // StrictMode 중복 실행이나 경쟁 상태에서도 안전하게 유지
@@ -37,8 +38,13 @@ export function AuthCallbackPage() {
 
     let cancelled = false;
     let unsub: (() => void) | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const processSession = async (authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }) => {
+      // processSession이 여러 소스에서 동시에 호출되어도 한 번만 실행되도록 보장
+      if (processStartedRef.current) return;
+      processStartedRef.current = true;
+
       try {
         const nickname =
           (authUser.user_metadata?.nickname as string) ||
@@ -133,11 +139,13 @@ export function AuthCallbackPage() {
         if (navigatedRef.current) return;
         navigatedRef.current = true;
 
-        const returnPage = savedReturnPage.current;
+        // returnPage를 localStorage에서 다시 한번 확인 (ref가 null일 경우 대비)
+        const returnPage = savedReturnPage.current || loadReturnPage();
         const targetPage = (returnPage as 'landing' | 'nickname' | 'result' | 'payment' | 'authCallback') || 'landing';
-        clearReturnPage();
         console.log('[Auth Callback] 이동:', targetPage);
         setCurrentPage(targetPage);
+        // navigation 완료 후에 returnPage 삭제
+        clearReturnPage();
       } catch (err) {
         if (cancelled) return;
         console.error('[Auth Callback] 실패:', err);
@@ -145,40 +153,69 @@ export function AuthCallbackPage() {
       }
     };
 
+    // onAuthStateChange를 가장 먼저 설정하여 SIGNED_IN 이벤트를 놓치지 않도록 함
+    // 모바일 전체 페이지 리다이렉트에서 PKCE 코드 교환 완료 시 SIGNED_IN이 발생
+    console.log('[Auth Callback] onAuthStateChange 리스너 설정');
+    const { data: subData } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      console.log('[Auth Callback] onAuthStateChange:', event, !!session);
+      // SIGNED_IN 이벤트 대기 (모바일 PKCE 교환 완료 시점)
+      // INITIAL_SESSION도 세션이 이미 있는 경우(교환 완료 후 리스너 설정)를 대비해 처리
+      if ((event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) && session) {
+        if (unsub) { unsub(); unsub = null; }
+        processSession(session.user);
+      }
+    });
+    unsub = subData.subscription.unsubscribe;
+
+    // getSession()도 병렬로 시도 — 세션이 이미 있다면 빠르게 처리
     (async () => {
       try {
-        console.log('[Auth Callback] 시작');
+        console.log('[Auth Callback] getSession 시도');
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (cancelled) return;
         console.log('[Auth Callback] getSession:', { sessionError, hasSession: !!sessionData.session });
 
-        if (sessionData.session) {
-          await processSession(sessionData.session.user);
-          return;
+        if (sessionError) {
+          console.error('[Auth Callback] getSession error:', sessionError);
         }
 
-        // 모바일에서 getSession이 아직 세션을 반환하지 않을 수 있음 —
-        // PKCE 코드 교환이 완료되기를 onAuthStateChange로 대기
-        console.log('[Auth Callback] 세션 없음, onAuthStateChange 대기...');
-        unsub = supabase.auth.onAuthStateChange((event, session) => {
-          if (cancelled) return;
-          if (event === 'SIGNED_IN' && session) {
-            console.log('[Auth Callback] onAuthStateChange: SIGNED_IN');
-            if (unsub) { unsub(); unsub = null; }
-            processSession(session.user);
-          }
-        }).data.subscription.unsubscribe;
+        if (sessionData.session && !processStartedRef.current) {
+          if (unsub) { unsub(); unsub = null; }
+          processSession(sessionData.session.user);
+        }
       } catch (err) {
         if (cancelled) return;
-        console.error('[Auth Callback] 실패:', err);
-        setError(err instanceof Error ? err.message : '로그인에 실패했어요.');
+        console.error('[Auth Callback] getSession 실패:', err);
       }
     })();
+
+    // 타임아웃 폴백: 15초 후 세션 재확인
+    // 모바일에서 PKCE 교환이 지연되는 경우 최후의 안전망
+    timeoutId = setTimeout(async () => {
+      if (cancelled || navigatedRef.current) return;
+      console.log('[Auth Callback] 타임아웃, 세션 재확인');
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (cancelled || navigatedRef.current) return;
+        if (sessionData.session) {
+          if (unsub) { unsub(); unsub = null; }
+          processSession(sessionData.session.user);
+        } else {
+          setError('로그인 시간이 초과되었어요. 다시 시도해주세요.');
+        }
+      } catch {
+        if (!cancelled && !navigatedRef.current) {
+          setError('로그인 시간이 초과되었어요. 다시 시도해주세요.');
+        }
+      }
+    }, 15000);
 
     return () => {
       cancelled = true;
       processingRef.current = false;
       if (unsub) { unsub(); unsub = null; }
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [setCurrentPage, setUser, marketingConsent, residentKey, answers, setSelectedResultId, setSelectedResidentKey]);
 

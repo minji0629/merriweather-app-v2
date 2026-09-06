@@ -6,7 +6,6 @@ const supabaseUrl = rawUrl.includes('rokseacezmaeiwvzmogx') ? FALLBACK_URL : raw
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? 'public-anon-key';
 
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn('[Supabase] 환경변수가 설정되지 않았습니다.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -96,7 +95,6 @@ export async function upsertUser(
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] upsertUser error:', error.message);
     return null;
   }
   return data as UserRow | null;
@@ -119,7 +117,6 @@ export async function saveFreeResult(
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] saveFreeResult error:', error.message);
     return null;
   }
   return data as ResultRow | null;
@@ -138,7 +135,6 @@ export async function savePurchase(
     .eq('order_id', orderId)
     .maybeSingle();
   if (existing) {
-    console.log('[Supabase] savePurchase - 이미 존재하는 주문:', orderId);
     return existing as PurchaseRow | null;
   }
 
@@ -155,7 +151,6 @@ export async function savePurchase(
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] savePurchase error:', error.message);
     return null;
   }
   return data as PurchaseRow | null;
@@ -172,14 +167,11 @@ export async function markResultPaid(resultId: string, productType?: string): Pr
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] markResultPaid error:', error.message);
     return false;
   }
   if (!data) {
-    console.warn('[Supabase] markResultPaid - 업데이트된 행 없음, result_id:', resultId);
     return false;
   }
-  console.log('[Supabase] markResultPaid 성공:', data);
   return true;
 }
 
@@ -227,7 +219,6 @@ export async function createGiftCode(
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] createGiftCode error:', error.message);
     return null;
   }
   return data as GiftCodeRow | null;
@@ -242,7 +233,6 @@ export async function fetchGiftCodesByBuyer(buyerId: string): Promise<GiftCodeRo
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[Supabase] fetchGiftCodesByBuyer error:', error.message);
     return [];
   }
   return (data as GiftCodeRow[]) ?? [];
@@ -258,7 +248,6 @@ export async function linkResultToUser(
     .update({ user_id: userId })
     .eq('id', resultId);
   if (error) {
-    console.error('[Supabase] linkResultToUser error:', error.message);
     return false;
   }
   return true;
@@ -274,7 +263,6 @@ export async function linkQuestionsToUser(
     .update({ user_id: userId })
     .eq('result_id', resultId);
   if (error) {
-    console.error('[Supabase] linkQuestionsToUser error:', error.message);
     return false;
   }
   return true;
@@ -290,7 +278,6 @@ export async function fetchLatestResultId(userId: string): Promise<string | null
     .maybeSingle();
 
   if (selectError || !latest) {
-    console.error('[Supabase] fetchLatestResultId failed:', selectError?.message);
     return null;
   }
   return latest.id;
@@ -310,7 +297,6 @@ export async function fetchUserResults(userId: string): Promise<ResultRow[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[Supabase] fetchUserResults error:', error.message);
     return [];
   }
   const rows = (data as ResultRow[]) ?? [];
@@ -333,7 +319,6 @@ export async function fetchUserResults(userId: string): Promise<ResultRow[]> {
           return Math.abs(purchaseTime - resultTime) < 10 * 60 * 1000; // 10분 이내
         });
         if (matchingPurchase) {
-          console.log('[Supabase] fetchUserResults - is_paid 보정:', row.id, '→ product_type:', matchingPurchase.product_type);
           await markResultPaid(row.id, matchingPurchase.product_type);
           row.is_paid = true;
           row.product_type = matchingPurchase.product_type;
@@ -354,7 +339,6 @@ export async function fetchResultById(resultId: string): Promise<ResultRow | nul
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] fetchResultById error:', error.message);
     return null;
   }
   return data as ResultRow | null;
@@ -371,7 +355,6 @@ export async function saveAiText(
     .update({ [field]: text })
     .eq('id', resultId);
   if (error) {
-    console.error(`[Supabase] saveAiText (${field}) error:`, error.message);
     return false;
   }
   return true;
@@ -388,7 +371,6 @@ export async function appendQuestionHistory(
     .eq('id', questionId)
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] appendQuestionHistory fetch error:', error.message);
     return false;
   }
   const existing = (data?.question_history as QuestionHistoryEntry[] | null) ?? [];
@@ -398,7 +380,6 @@ export async function appendQuestionHistory(
     .update({ question_history: updated })
     .eq('id', questionId);
   if (updateError) {
-    console.error('[Supabase] appendQuestionHistory update error:', updateError.message);
     return false;
   }
   return true;
@@ -439,7 +420,6 @@ export async function upsertQuestions(
         .select()
         .maybeSingle();
       if (error) {
-        console.error('[Supabase] upsertQuestions(extra) error:', error.message);
         return null;
       }
       return data as QuestionRow | null;
@@ -450,7 +430,6 @@ export async function upsertQuestions(
       .select()
       .maybeSingle();
     if (error) {
-      console.error('[Supabase] upsertQuestions(extra-new) error:', error.message);
       return null;
     }
     return data as QuestionRow | null;
@@ -466,7 +445,6 @@ export async function upsertQuestions(
         .select()
         .maybeSingle();
       if (error) {
-        console.error('[Supabase] upsertQuestions(upgrade) error:', error.message);
         return existing as QuestionRow | null;
       }
       return (data as QuestionRow | null) ?? existing;
@@ -481,7 +459,6 @@ export async function upsertQuestions(
     .select()
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] upsertQuestions error:', error.message);
     return null;
   }
   return data as QuestionRow | null;
@@ -499,7 +476,6 @@ export async function fetchQuestions(
     .eq('result_id', resultId)
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] fetchQuestions error:', error.message);
     return null;
   }
   return data as QuestionRow | null;
@@ -517,7 +493,6 @@ export async function fetchLatestQuestionsByUser(
     .limit(1)
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] fetchLatestQuestionsByUser error:', error.message);
     return null;
   }
   return data as QuestionRow | null;
@@ -535,7 +510,6 @@ export async function createDefaultQuestions(
     .select()
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] createDefaultQuestions error:', error.message);
     return null;
   }
   return data as QuestionRow | null;
@@ -549,7 +523,6 @@ export async function decrementQuestion(rowId: string, current: number): Promise
     .update({ remaining_count: current - 1 })
     .eq('id', rowId);
   if (error) {
-    console.error('[Supabase] decrementQuestion error:', error.message);
     return false;
   }
   return true;
@@ -577,7 +550,6 @@ export async function fetchDeveloperNotes(): Promise<DeveloperNoteRow[]> {
     .select('id, title, content, created_at')
     .order('created_at', { ascending: false });
   if (error) {
-    console.error('[Supabase] fetchDeveloperNotes error:', error.message);
     return [];
   }
   return (data as DeveloperNoteRow[]) ?? [];
@@ -590,7 +562,6 @@ export async function fetchDeveloperNote(noteId: string): Promise<DeveloperNoteR
     .eq('id', noteId)
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] fetchDeveloperNote error:', error.message);
     return null;
   }
   return data as DeveloperNoteRow | null;
@@ -603,7 +574,6 @@ export async function createDeveloperNote(title: string, content: string): Promi
     .select()
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] createDeveloperNote error:', error.message);
     return null;
   }
   return data as DeveloperNoteRow | null;
@@ -615,7 +585,6 @@ export async function updateDeveloperNote(noteId: string, title: string, content
     .update({ title, content })
     .eq('id', noteId);
   if (error) {
-    console.error('[Supabase] updateDeveloperNote error:', error.message);
     return false;
   }
   return true;
@@ -627,7 +596,6 @@ export async function deleteDeveloperNote(noteId: string): Promise<boolean> {
     .delete()
     .eq('id', noteId);
   if (error) {
-    console.error('[Supabase] deleteDeveloperNote error:', error.message);
     return false;
   }
   return true;
@@ -640,7 +608,6 @@ export async function fetchDeveloperNoteComments(noteId: string): Promise<Develo
     .eq('note_id', noteId)
     .order('created_at', { ascending: true });
   if (error) {
-    console.error('[Supabase] fetchDeveloperNoteComments error:', error.message);
     return [];
   }
   const comments = (data as DeveloperNoteCommentRow[]) ?? [];
@@ -669,7 +636,6 @@ export async function createDeveloperNoteComment(
     .select()
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] createDeveloperNoteComment error:', error.message);
     return null;
   }
   return data as DeveloperNoteCommentRow | null;
@@ -681,7 +647,6 @@ export async function deleteDeveloperNoteComment(commentId: string): Promise<boo
     .delete()
     .eq('id', commentId);
   if (error) {
-    console.error('[Supabase] deleteDeveloperNoteComment error:', error.message);
     return false;
   }
   return true;
@@ -696,25 +661,19 @@ export async function checkIsAdmin(): Promise<boolean> {
     (sessionData.session?.user?.user_metadata?.name as string) ??
     (sessionData.session?.user?.user_metadata?.full_name as string) ??
     null;
-  console.log('[checkIsAdmin] user.id:', currentUserId, '/ email:', currentUserEmail, '/ nickname:', currentNickname);
 
   if (!currentUserId) {
-    console.warn('[checkIsAdmin] 로그인된 사용자가 없습니다. 관리자 확인 불가.');
     return false;
   }
 
   const { data, error } = await supabase.rpc('is_admin');
   if (error) {
-    console.error('[checkIsAdmin] is_admin() RPC 호출 실패:', error.message, '(code:', error.code + ')');
     return false;
   }
-  console.log('[checkIsAdmin] is_admin() RPC 결과:', data, '/ 최종 반환:', data === true);
   return data === true;
 }
 
 export async function deleteResult(resultId: string, userId: string): Promise<boolean> {
-  console.log('[Delete Result] 1. 삭제할 result id:', resultId, '/ user_id:', userId);
-  console.log('[Delete Result] 2. Supabase delete 호출...');
   const { data, error } = await supabase
     .from('results')
     .delete()
@@ -723,10 +682,8 @@ export async function deleteResult(resultId: string, userId: string): Promise<bo
     .select();
 
   if (error) {
-    console.error('[Delete Result] 3. 삭제 실패:', error.message, '(code:', error.code + ')');
     return false;
   }
-  console.log('[Delete Result] 3. 삭제 완료. 삭제된 행 수:', data?.length ?? 0);
   return true;
 }
 
@@ -749,7 +706,6 @@ export async function fetchTravelPosts(): Promise<TravelPostRow[]> {
     .select('id, title, content, user_id, nickname, created_at')
     .order('created_at', { ascending: false });
   if (error) {
-    console.error('[Supabase] fetchTravelPosts error:', error.message);
     return [];
   }
   return (data as TravelPostRow[]) ?? [];
@@ -761,12 +717,9 @@ export async function createTravelPost(
   nickname: string,
   userId: string,
 ): Promise<TravelPostRow | null> {
-  console.log('[Supabase] createTravelPost 시작 - userId:', userId, '/ nickname:', nickname);
 
   const { data: sessionData } = await supabase.auth.getSession();
   const sessionUserId = sessionData.session?.user?.id ?? null;
-  console.log('[Supabase] createTravelPost - 현재 세션 user.id:', sessionUserId);
-  console.log('[Supabase] createTravelPost - 세션 일치 여부:', sessionUserId === userId);
 
   const { data, error } = await supabase
     .from('travel_posts')
@@ -774,11 +727,8 @@ export async function createTravelPost(
     .select()
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] createTravelPost error:', error.message, '(code:', error.code + ')');
-    console.error('[Supabase] createTravelPost 전체 에러 객체:', JSON.stringify(error, null, 2));
     return null;
   }
-  console.log('[Supabase] createTravelPost 성공:', data);
   return data as TravelPostRow | null;
 }
 
@@ -788,7 +738,6 @@ export async function deleteTravelPost(postId: string): Promise<boolean> {
     .delete()
     .eq('id', postId);
   if (error) {
-    console.error('[Supabase] deleteTravelPost error:', error.message);
     return false;
   }
   return true;

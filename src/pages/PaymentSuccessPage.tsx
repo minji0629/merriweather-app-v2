@@ -15,8 +15,7 @@ import {
 } from '@/lib/authStorage';
 import { PageContainer } from '@/components/PageContainer';
 import { Check, Sparkles, Gift, Share2 } from '@/components/Icons';
-import { shareGiftViaKakao, isKakaoAvailable } from '@/lib/kakao';
-const KAKAO_SERVICE_URL = 'https://merriweather.net';
+const SERVICE_URL = 'https://merriweather.net';
 import type { ProductId } from '@/lib/portone';
 
 const PRODUCT_AMOUNT_MAP: Record<ProductId, number> = {
@@ -255,55 +254,52 @@ export function PaymentSuccessPage() {
     return () => {};
   }, [status]);
 
-  const [kakaoError, setKakaoError] = useState(false);
+  const [shareError, setShareError] = useState(false);
 
   const handleGiftShare = async () => {
     if (!giftCode) return;
     const senderName = user?.nickname ?? '여행자';
-    const giftPageUrl = `${KAKAO_SERVICE_URL}/gift?code=${encodeURIComponent(giftCode.code)}`;
-    const homeUrl = KAKAO_SERVICE_URL;
-    const imageUrl = `${KAKAO_SERVICE_URL}/landing-bg.png`;
+    const giftPageUrl = `${SERVICE_URL}/gift?code=${encodeURIComponent(giftCode.code)}`;
+    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: ${SERVICE_URL}`;
 
-    if (isKakaoAvailable()) {
-      console.log('[Payment Success] 카카오 공유 시작 — KAKAO_JS_KEY 설정됨, giftCode:', giftCode.code);
-      try {
-        await shareGiftViaKakao({
-          senderName,
-          giftCode: giftCode.code,
-          giftPageUrl,
-          homeUrl,
-          imageUrl,
-        });
-        console.log('[Payment Success] 카카오 공유 성공');
-        return;
-      } catch (err) {
-        console.error('[Payment Success] 카카오 공유 실패:', err);
-        if (err instanceof Error) {
-          console.error('[Payment Success] 에러 이름:', err.name);
-          console.error('[Payment Success] 에러 메시지:', err.message);
-          console.error('[Payment Success] 에러 스택:', err.stack);
-        } else {
-          console.error('[Payment Success] 알 수 없는 에러 타입:', typeof err, err);
-        }
-        setKakaoError(true);
-      }
-    } else {
-      console.warn('[Payment Success] VITE_KAKAO_JAVASCRIPT_KEY가 설정되지 않아 폴백으로 전환합니다.');
+    if (!navigator.share) {
+      navigator.clipboard?.writeText(shareText);
+      return;
     }
 
-    // 폴백: 네이티브 공유 또는 클립보드 복사
-    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: ${homeUrl}`;
-    if (navigator.share) {
+    const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [] as File[] });
+
+    if (canShareFiles) {
       try {
-        await navigator.share({
-          title: '메리웨더 선물이 도착했어요 🎁',
-          text: shareText,
-          url: giftPageUrl,
-        });
-      } catch {
-        // 공유 취소 시 무시
+        const res = await fetch(`${SERVICE_URL}/landing-bg.png`);
+        if (!res.ok) throw new Error(`이미지 로드 실패: ${res.status}`);
+        const blob = await res.blob();
+        const file = new File([blob], 'merriweather-gift.png', { type: blob.type || 'image/png' });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: '메리웨더 선물이 도착했어요 🎁',
+            text: shareText,
+            url: giftPageUrl,
+            files: [file],
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn('[Payment Success] 이미지 첨부 공유 실패, 텍스트만 공유:', err);
       }
-    } else {
+    }
+
+    try {
+      await navigator.share({
+        title: '메리웨더 선물이 도착했어요 🎁',
+        text: shareText,
+        url: giftPageUrl,
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      console.error('[Payment Success] 공유 실패:', err);
+      setShareError(true);
       navigator.clipboard?.writeText(shareText);
     }
   };
@@ -374,14 +370,14 @@ export function PaymentSuccessPage() {
                            flex items-center justify-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
-                카카오톡으로 공유하기
+                선물 공유하기
               </button>
               <p className="font-sans text-xs text-text-sub text-center leading-relaxed">
-                이 화면을 직접 캡처하거나 공유하기 버튼으로 선물 코드를 전달해주세요.
+                공유하기 버튼으로 선물 코드와 이미지를 전달해주세요.
               </p>
-              {kakaoError && (
+              {shareError && (
                 <p className="font-sans text-xs text-error text-center leading-relaxed">
-                  카카오톡 공유를 사용할 수 없어요. 대신 코드 복사하기를 이용해주세요.
+                  공유에 실패했어요. 대신 코드 복사하기를 이용해주세요.
                 </p>
               )}
               <button

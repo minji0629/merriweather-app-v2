@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Download, Share2, X } from '@/components/Icons';
-import { SERVICE_URL, ShareContent } from '@/lib/share';
+import { SERVICE_URL, ShareContent, shareContent, copyLink } from '@/lib/share';
+import { Link2 as LinkIcon } from '@/components/Icons';
 
 interface ShareModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ShareModalProps {
 export function ShareModal({ open, content, cardImage, cardName, onClose }: ShareModalProps) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const linkUrl = content.linkUrl ?? SERVICE_URL;
 
   useEffect(() => {
@@ -25,6 +27,38 @@ export function ShareModal({ open, content, cardImage, cardName, onClose }: Shar
   }, [open]);
 
   if (!open) return null;
+
+  const handleShareLink = async () => {
+    const result = await shareContent({ linkUrl });
+    if (result === 'unsupported') {
+      const ok = await copyLink(linkUrl);
+      setMessage(ok ? '링크를 복사했어요.' : '링크 복사에 실패했어요.');
+    } else if (result === 'cancelled') {
+      // user cancelled — no message
+    } else {
+      setMessage('공유했어요.');
+    }
+  };
+
+  const handleInvite = async () => {
+    const result = await shareContent({ linkUrl: SERVICE_URL });
+    if (result === 'unsupported') {
+      const ok = await copyLink(SERVICE_URL);
+      setMessage(ok ? '초대 링크를 복사했어요.' : '링크 복사에 실패했어요.');
+    } else if (result === 'cancelled') {
+      // user cancelled
+    } else {
+      setMessage('초대 링크를 공유했어요.');
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const ok = await copyLink(linkUrl);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleDownloadCard = async () => {
     if (!cardImage) {
@@ -69,18 +103,39 @@ export function ShareModal({ open, content, cardImage, cardName, onClose }: Shar
           <Share2 className="w-7 h-7 text-point-dark" />
         </div>
         <h2 className="font-batang text-xl text-text text-center mb-1">나의 주민 알리기</h2>
-        <p className="font-sans text-xs text-text-sub text-center mb-3 break-all">{linkUrl}</p>
-        <p className="font-sans text-xs text-point-dark text-center mb-5 leading-relaxed">
-          지금은 프리 오픈 기간으로 주민 카드 내려받기만 가능해요.
-        </p>
+        <p className="font-sans text-xs text-text-sub text-center mb-5 break-all">{linkUrl}</p>
 
         <div className="space-y-2.5">
+          {/* 나의 주민 알리기 — 결과 링크 공유 */}
+          <button onClick={handleShareLink} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-base border border-[#E0DDD8] text-left hover:border-point hover:bg-point/5 transition-colors">
+            <span className="w-9 h-9 rounded-full bg-point/15 flex items-center justify-center text-point-dark"><Share2 className="w-4 h-4" /></span>
+            <span>
+              <strong className="block font-sans text-sm font-medium text-text">나의 주민 알리기</strong>
+              <span className="block mt-0.5 font-sans text-xs text-text-sub">나의 결과 링크를 공유해요</span>
+            </span>
+          </button>
+
+          {/* 나의 주민 카드 다운받기 */}
           <button onClick={handleDownloadCard} disabled={busy} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-base border border-[#E0DDD8] text-left hover:border-point hover:bg-point/5 transition-colors disabled:opacity-50">
             <span className="w-9 h-9 rounded-full bg-point/15 flex items-center justify-center text-point-dark"><Download className="w-4 h-4" /></span>
             <span>
               <strong className="block font-sans text-sm font-medium text-text">나의 주민 카드 다운받기</strong>
               <span className="block mt-0.5 font-sans text-xs text-text-sub">주민 카드 이미지를 저장해요</span>
             </span>
+          </button>
+
+          {/* 메리웨더로 초대하기 — 서비스 링크 공유 */}
+          <button onClick={handleInvite} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-base border border-[#E0DDD8] text-left hover:border-point hover:bg-point/5 transition-colors">
+            <span className="w-9 h-9 rounded-full bg-point/15 flex items-center justify-center text-point-dark"><LinkIcon className="w-4 h-4" /></span>
+            <span>
+              <strong className="block font-sans text-sm font-medium text-text">메리웨더로 초대하기</strong>
+              <span className="block mt-0.5 font-sans text-xs text-text-sub">메리웨더 서비스 링크를 공유해요</span>
+            </span>
+          </button>
+
+          {/* 링크 복사 버튼 */}
+          <button onClick={handleCopyLink} className="w-full flex items-center justify-center gap-1.5 py-3 font-sans text-xs text-text-sub hover:text-point transition-colors">
+            {copied ? <><Check className="w-3.5 h-3.5" /> 복사됨</> : '링크 복사하기'}
           </button>
         </div>
 

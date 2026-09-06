@@ -1,4 +1,5 @@
 const KAKAO_SDK_URL = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+const KAKAO_SERVICE_URL = 'https://merriweather.net';
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY as string | undefined;
 
 declare global {
@@ -96,12 +97,16 @@ export interface KakaoGiftShareParams {
 }
 
 export async function shareGiftViaKakao(params: KakaoGiftShareParams): Promise<void> {
+  const giftPageUrl = `${KAKAO_SERVICE_URL}/gift?code=${encodeURIComponent(params.giftCode)}`;
+  const homeUrl = KAKAO_SERVICE_URL;
+  const imageUrl = `${KAKAO_SERVICE_URL}/landing-bg.png`;
+
   console.log('[Kakao] shareGiftViaKakao 시작 — params:', {
     senderName: params.senderName,
     giftCode: params.giftCode,
-    giftPageUrl: params.giftPageUrl,
-    homeUrl: params.homeUrl,
-    imageUrl: params.imageUrl,
+    giftPageUrl,
+    homeUrl,
+    imageUrl,
   });
 
   try {
@@ -128,25 +133,25 @@ export async function shareGiftViaKakao(params: KakaoGiftShareParams): Promise<v
     content: {
       title: '메리웨더 선물이 도착했어요 🎁',
       description,
-      imageUrl: params.imageUrl,
+      imageUrl,
       link: {
-        mobileWebUrl: params.giftPageUrl,
-        webUrl: params.giftPageUrl,
+        mobileWebUrl: giftPageUrl,
+        webUrl: giftPageUrl,
       },
     },
     buttons: [
       {
         title: '선물 페이지 확인하기',
         link: {
-          mobileWebUrl: params.giftPageUrl,
-          webUrl: params.giftPageUrl,
+          mobileWebUrl: giftPageUrl,
+          webUrl: giftPageUrl,
         },
       },
       {
         title: '메리웨더 시작하기',
         link: {
-          mobileWebUrl: params.homeUrl,
-          webUrl: params.homeUrl,
+          mobileWebUrl: homeUrl,
+          webUrl: homeUrl,
         },
       },
     ],

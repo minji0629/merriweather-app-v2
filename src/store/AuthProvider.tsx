@@ -27,15 +27,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (returnPage?: string) => {
     const pageToSave = returnPage || 'landing';
-    console.log('[Auth] login - 저장할 returnPage:', pageToSave, '| 호출 위치:', new Error().stack?.split('\n')[2]?.trim() || 'unknown');
     saveReturnPage(pageToSave);
     // returnPage를 redirectTo URL의 쿼리 파라미터로도 전달
     // 모바일에서 외부 도메인 리다이렉트 시 localStorage/sessionStorage가 사라져도
     // URL 파라미터는 콜백까지 유지됨
     const redirectUrl = new URL('https://merriweather.net/auth/callback');
     redirectUrl.searchParams.set('return_page', pageToSave);
-    console.log('[Auth] login - redirectTo URL:', redirectUrl.toString());
-    console.log('[Auth] login - return_page 파라미터:', redirectUrl.searchParams.get('return_page'));
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {
@@ -82,12 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         upsertUser(authUser.id, nickname, marketingConsent, authUser.email ?? undefined)
           .then((dbUser) => {
             if (mounted && dbUser) {
-              console.log('[Auth] 세션 복원 - upsertUser 성공:', dbUser.id);
             } else if (mounted) {
-              console.error('[Auth] 세션 복원 - upsertUser 실패: null 반환');
             }
           })
-          .catch((err) => console.error('[Auth] 세션 복원 - upsertUser 예외:', err));
+          .catch(() => {});
       }
     })();
     return () => {

@@ -90,6 +90,7 @@ export async function loadKakaoSDK(): Promise<void> {
 
 export interface KakaoGiftShareParams {
   senderName: string;
+  receiverName: string;
   giftCode: string;
   giftPageUrl: string;
   homeUrl: string;
@@ -103,6 +104,7 @@ export async function shareGiftViaKakao(params: KakaoGiftShareParams): Promise<v
 
   console.log('[Kakao] shareGiftViaKakao 시작 — params:', {
     senderName: params.senderName,
+    receiverName: params.receiverName,
     giftCode: params.giftCode,
     giftPageUrl,
     homeUrl,
@@ -127,7 +129,7 @@ export async function shareGiftViaKakao(params: KakaoGiftShareParams): Promise<v
     throw new Error('Kakao SDK가 초기화되지 않았어요.');
   }
 
-  const description = `${params.senderName}님이 선물을 보냈어요.\n선물 코드: ${params.giftCode}`;
+  const description = `${params.senderName}님이 ${params.receiverName}님께 선물을 보냈어요.`;
   const shareOptions = {
     objectType: 'feed' as const,
     content: {

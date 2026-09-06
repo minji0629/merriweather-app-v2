@@ -15,6 +15,8 @@ import {
 } from '@/lib/authStorage';
 import { PageContainer } from '@/components/PageContainer';
 import { Check, Sparkles, Gift, Share2 } from '@/components/Icons';
+import { shareGiftViaKakao, isKakaoAvailable } from '@/lib/kakao';
+import { SERVICE_URL } from '@/lib/share';
 import type { ProductId } from '@/lib/portone';
 
 const PRODUCT_AMOUNT_MAP: Record<ProductId, number> = {
@@ -253,12 +255,32 @@ export function PaymentSuccessPage() {
     return () => {};
   }, [status]);
 
+  const [kakaoError, setKakaoError] = useState(false);
+
   const handleGiftShare = async () => {
     if (!giftCode) return;
     const senderName = user?.nickname ?? '여행자';
-    const giftPageUrl = `${window.location.origin}/gift?code=${giftCode.code}`;
-    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: https://merriweather.net`;
+    const giftPageUrl = `${SERVICE_URL}/gift?code=${giftCode.code}`;
+    const imageUrl = `${SERVICE_URL}/landing-bg.png`;
 
+    if (isKakaoAvailable()) {
+      try {
+        await shareGiftViaKakao({
+          senderName,
+          giftCode: giftCode.code,
+          giftPageUrl,
+          homeUrl: SERVICE_URL,
+          imageUrl,
+        });
+        return;
+      } catch (err) {
+        console.error('[Payment Success] 카카오 공유 실패:', err);
+        setKakaoError(true);
+      }
+    }
+
+    // 폴백: 네이티브 공유 또는 클립보드 복사
+    const shareText = `${senderName}님이 선물을 보냈어요.\n\n선물 코드: ${giftCode.code}\n\n선물 페이지 확인: ${giftPageUrl}\n메리웨더 시작하기: ${SERVICE_URL}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -340,11 +362,16 @@ export function PaymentSuccessPage() {
                            flex items-center justify-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
-                공유하기
+                카카오톡으로 공유하기
               </button>
               <p className="font-sans text-xs text-text-sub text-center leading-relaxed">
                 이 화면을 직접 캡처하거나 공유하기 버튼으로 선물 코드를 전달해주세요.
               </p>
+              {kakaoError && (
+                <p className="font-sans text-xs text-error text-center leading-relaxed">
+                  카카오톡 공유를 사용할 수 없어요. 대신 코드 복사하기를 이용해주세요.
+                </p>
+              )}
               <button
                 onClick={handleCopyCode}
                 className="w-full py-3.5 bg-white border border-[#E0DDD8] rounded-2xl font-sans font-medium text-sm text-text

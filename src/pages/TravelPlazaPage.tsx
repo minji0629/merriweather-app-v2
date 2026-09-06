@@ -31,6 +31,7 @@ export function TravelPlazaPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Delete confirmation
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
@@ -49,16 +50,20 @@ export function TravelPlazaPage() {
   const handleOpenNewEditor = () => {
     setEditTitle('');
     setEditContent('');
+    setSaveError('');
     setShowEditor(true);
   };
 
   const handleSavePost = async () => {
     if (!editTitle.trim() || !editContent.trim() || !user) return;
     setSaving(true);
-    const created = await createTravelPost(editTitle.trim(), editContent.trim(), user.nickname);
+    setSaveError('');
+    const created = await createTravelPost(editTitle.trim(), editContent.trim(), user.nickname, user.id);
     if (created) {
       setShowEditor(false);
       await loadPosts();
+    } else {
+      setSaveError('글 작성에 실패했어요. 잠시 후 다시 시도해주세요.');
     }
     setSaving(false);
   };
@@ -261,6 +266,9 @@ export function TravelPlazaPage() {
                 rows={8}
                 className="w-full box-border px-4 py-3 text-sm font-sans text-text bg-base rounded-xl border border-[#E0DDD8] focus:border-point focus:outline-none transition-colors resize-none"
               />
+              {saveError && (
+                <p className="font-sans text-sm text-red-500 text-center">{saveError}</p>
+              )}
               <button
                 onClick={handleSavePost}
                 disabled={saving || !editTitle.trim() || !editContent.trim()}

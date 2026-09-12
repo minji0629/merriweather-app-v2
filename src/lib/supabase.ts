@@ -55,6 +55,7 @@ export interface GiftCodeRow {
   is_code_used: boolean;
   expires_at: string;
   created_at: string;
+  order_id: string | null;
 }
 
 export interface QuestionHistoryEntry {
@@ -196,6 +197,7 @@ export async function createGiftCode(
   recipientName: string,
   message: string,
   productType: string,
+  orderId?: string,
 ): Promise<GiftCodeRow | null> {
   const code = generateRandomCode(8);
   const linkToken = generateRandomCode(32);
@@ -214,8 +216,23 @@ export async function createGiftCode(
       is_link_used: false,
       is_code_used: false,
       expires_at: expiresAt.toISOString(),
+      order_id: orderId ?? null,
     })
     .select()
+    .maybeSingle();
+
+  if (error) {
+    return null;
+  }
+  return data as GiftCodeRow | null;
+}
+
+/** 주문 ID로 기존 선물 코드 조회 (새로고침 중복 생성 방지) */
+export async function fetchGiftCodeByOrderId(orderId: string): Promise<GiftCodeRow | null> {
+  const { data, error } = await supabase
+    .from('gift_codes')
+    .select('*')
+    .eq('order_id', orderId)
     .maybeSingle();
 
   if (error) {

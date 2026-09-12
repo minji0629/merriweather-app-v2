@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '@/store/useApp';
 import { useAuth } from '@/store/useAuth';
-import { supabase, savePurchase, markResultPaid, upsertQuestions, createGiftCode, GiftCodeRow } from '@/lib/supabase';
+import { supabase, savePurchase, markResultPaid, upsertQuestions, createGiftCode, fetchGiftCodeByOrderId, GiftCodeRow } from '@/lib/supabase';
 import {
   loadUserId,
   savePendingPurchase,
@@ -130,11 +130,24 @@ export function PaymentSuccessPage() {
         const giftInfo = loadGiftInfo();
 
         try {
+          const existingGift = await fetchGiftCodeByOrderId(merchantUid!);
+          if (cancelled) return;
+
+          if (existingGift) {
+            if (!cancelled) {
+              setGiftCode(existingGift);
+              clearGiftInfo();
+              setStatus('giftDone');
+            }
+            return;
+          }
+
           const giftRow = await createGiftCode(
             userId,
             giftInfo?.recipient ?? '',
             giftInfo?.message ?? '',
             productType,
+            merchantUid!,
           );
           if (cancelled) return;
 

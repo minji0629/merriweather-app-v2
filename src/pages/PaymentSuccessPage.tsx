@@ -154,13 +154,15 @@ export function PaymentSuccessPage() {
           if (giftRow) {
             if (!cancelled) {
               setGiftCode(giftRow);
-              clearGiftInfo();
-              setStatus('giftDone');
             }
-            return;
-          } else {
           }
+          clearGiftInfo();
+          if (!cancelled) setStatus('giftDone');
+          return;
         } catch (err) {
+          clearGiftInfo();
+          if (!cancelled) setStatus('giftDone');
+          return;
         }
       }
 

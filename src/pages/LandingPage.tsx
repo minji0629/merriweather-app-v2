@@ -35,7 +35,9 @@ export function LandingPage() {
               <span className="font-imperial text-white tracking-wide leading-none" style={{ fontSize: '4rem', WebkitTextStroke: '0.8px white' }}>Merri</span>
               <span className="font-imperial text-white tracking-wide leading-none" style={{ marginLeft: '0.65em', fontSize: '4rem', WebkitTextStroke: '0.8px white', marginTop: '-0.1em' }}>Weather</span>
             </div>
+          </div>
 
+          {/* Spacer */}
           {/* Spacer */}
           <div className="flex-1" />
 

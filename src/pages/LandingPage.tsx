@@ -35,8 +35,6 @@ export function LandingPage() {
               <span className="font-imperial text-white tracking-wide leading-none" style={{ fontSize: '4rem', WebkitTextStroke: '0.8px white' }}>Merri</span>
               <span className="font-imperial text-white tracking-wide leading-none" style={{ marginLeft: '0.65em', fontSize: '4rem', WebkitTextStroke: '0.8px white', marginTop: '-0.1em' }}>Weather</span>
             </div>
-            <p className="font-sans text-white/90 text-xs tracking-[0.25em] mt-3 text-center drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]" style={{ marginLeft: '4px' }}>나를 찾아 떠나는 여행</p>
-          </div>
 
           {/* Spacer */}
           <div className="flex-1" />

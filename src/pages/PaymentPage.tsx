@@ -6,7 +6,7 @@ import { RESIDENT_IMAGES } from '@/constants/images';
 import { getResidentProfile } from '@/constants/residents';
 import { Check, Clock, Sparkles } from '@/components/Icons';
 import { TermsAgreement } from '@/components/TermsAgreement';
-import { requestPayment, ProductId } from '@/lib/portone';
+import { requestPayment, ProductId, PayMethod } from '@/lib/portone';
 
 export function PaymentPage() {
   const { nickname, setCurrentPage, residentKey } = useApp();
@@ -14,6 +14,7 @@ export function PaymentPage() {
   const { user, login } = useAuth();
   const { currentPage } = useApp();
   const [selected, setSelected] = useState<ProductId>('expedition_plus');
+  const [payMethod, setPayMethod] = useState<PayMethod>('card');
   const [agreed, setAgreed] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +42,7 @@ export function PaymentPage() {
     setPaying(true);
     setError('');
     try {
-      await requestPayment(selected);
+      await requestPayment(selected, payMethod);
     } catch (e) {
       setError(e instanceof Error ? e.message : '결제 중 오류가 발생했어요.');
       setPaying(false);
@@ -222,6 +223,48 @@ export function PaymentPage() {
             <TermsAgreement agreed={agreed} onChange={setAgreed} />
           </div>
 
+          {/* Payment method selector */}
+          <div className="mb-6 animate-fadeUp" style={{ animationDelay: '0.52s', opacity: 0 }}>
+            <p className="font-sans font-medium text-sm text-text mb-3">결제 수단 선택</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setPayMethod('card')}
+                className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2
+                            ${payMethod === 'card'
+                              ? 'border-point bg-white shadow-md'
+                              : 'border-[#E0DDD8] bg-white hover:border-point/40'
+                            }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#F4F1EA] flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-text" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <line x1="2" y1="10" x2="22" y2="10" />
+                  </svg>
+                </div>
+                <span className={`font-sans text-sm font-medium ${payMethod === 'card' ? 'text-point-dark' : 'text-text'}`}>
+                  신용/체크카드
+                </span>
+              </button>
+              <button
+                onClick={() => setPayMethod('kakaopay')}
+                className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2
+                            ${payMethod === 'kakaopay'
+                              ? 'border-point bg-white shadow-md'
+                              : 'border-[#E0DDD8] bg-white hover:border-point/40'
+                            }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#FEE500] flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+                    <text x="12" y="16" textAnchor="middle" fontSize="10" fontWeight="700" fill="#191919" fontFamily="sans-serif">PAY</text>
+                  </svg>
+                </div>
+                <span className={`font-sans text-sm font-medium ${payMethod === 'kakaopay' ? 'text-point-dark' : 'text-text'}`}>
+                  카카오페이
+                </span>
+              </button>
+            </div>
+          </div>
+
           {/* Login notice */}
           {!user && (
             <div className="mb-6 p-4 bg-[#FFF8E1] rounded-xl border border-[#FFE082] animate-fadeUp" style={{ animationDelay: '0.55s', opacity: 0 }}>
@@ -257,7 +300,7 @@ export function PaymentPage() {
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                결제하기
+                {payMethod === 'kakaopay' ? '카카오페이로 결제하기' : '결제하기'}
               </>
             )}
           </button>

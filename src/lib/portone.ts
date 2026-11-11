@@ -17,6 +17,9 @@ export const PRODUCTS: Record<ProductId, Product> = {
 
 const IMP_CODE = 'imp51603503';
 const PG_PROVIDER = 'html5_inicis';
+const KAKAO_PG_PROVIDER = 'kakaopay';
+
+export type PayMethod = 'card' | 'kakaopay';
 
 interface IamportCallback {
   success: boolean;
@@ -43,17 +46,20 @@ function ensureInit(): void {
   initialized = true;
 }
 
-export function requestPayment(productId: ProductId): Promise<void> {
+export function requestPayment(productId: ProductId, payMethod: PayMethod = 'card'): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
       ensureInit();
       const product = PRODUCTS[productId];
       const merchantUid = `merriweather-${productId}-${Date.now()}`;
 
+      const pg = payMethod === 'kakaopay' ? KAKAO_PG_PROVIDER : PG_PROVIDER;
+      const payMethodParam = payMethod === 'kakaopay' ? 'card' : 'card';
+
       window.IMP!.request_pay(
         {
-          pg: PG_PROVIDER,
-          pay_method: 'card',
+          pg,
+          pay_method: payMethodParam,
           merchant_uid: merchantUid,
           name: product.orderName,
           amount: product.amount,

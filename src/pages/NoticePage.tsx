@@ -34,6 +34,30 @@ export function NoticePage() {
       [안내]
     </span>
   </div>
+  <h2 className="font-batang text-lg text-text mb-2">카카오페이 결제 수단 추가 안내</h2>
+  <p className="font-sans text-xs text-text-sub mb-4">2026년 10월</p>
+  <div className="space-y-2">
+    <p className="font-sans text-sm text-text leading-relaxed">
+      메리웨더에서 카카오페이로도 결제할 수 있게 되었습니다.
+    </p>
+    <p className="font-sans text-sm text-text leading-relaxed">
+      탐험권, 탐험권 플러스, 선물하기 결제 시 결제 수단에서 카카오페이를 선택해주세요.
+    </p>
+    <p className="font-sans text-sm text-text-sub leading-relaxed">
+      앞으로도 더 편하게 여행을 이어갈 수 있도록 준비하겠습니다.
+    </p>
+  </div>
+</article>
+            <article
+  className="p-5 bg-white rounded-2xl border border-[#E0DDD8] shadow-sm animate-fadeUp"
+  style={{ animationDelay: '0.1s', opacity: 0 }}
+>
+  <div className="flex items-center gap-2 mb-3">
+    <span className="text-base">📌</span>
+    <span className="px-2.5 py-1 bg-point/10 text-point-dark text-xs font-sans font-bold rounded-full">
+      [안내]
+    </span>
+  </div>
   <h2 className="font-batang text-lg text-text mb-2">메리웨더 정식 오픈 안내</h2>
   <p className="font-sans text-xs text-text-sub mb-4">2026년 9월</p>
   <div className="space-y-2">
